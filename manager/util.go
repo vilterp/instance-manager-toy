@@ -1,14 +1,22 @@
 package manager
 
 import (
-	"fmt"
 	"math"
 	"math/rand"
 	"time"
 )
 
-func sleepRandom(base time.Duration, variance time.Duration) {
-	varDur := time.Duration(math.Round(rand.Float64() * float64(variance)))
-	fmt.Println("sleeping for", base, varDur)
-	time.Sleep(base + varDur)
+// Distribution of durations
+type DurDist struct {
+	Base     time.Duration
+	Variance time.Duration
+}
+
+func (d DurDist) GetRandom() time.Duration {
+	varDur := time.Duration(math.Round(rand.Float64() * float64(d.Variance)))
+	return d.Base + varDur
+}
+
+func (d DurDist) SleepRandom() {
+	time.Sleep(d.GetRandom())
 }

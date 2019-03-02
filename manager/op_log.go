@@ -13,9 +13,15 @@ type OpLogPublisher interface {
 	OpFailed(id OpID, err error)
 }
 
+type Stream interface {
+	Events() chan OpEvent
+	Unsubscribe()
+}
+
 type OpLogReader interface {
 	GetAll() []*Operation
-	Tail() chan OpEvent
+	Get(id OpID) *Operation
+	Tail() Stream
 	Wait(id OpID) error
 }
 
@@ -23,7 +29,7 @@ type OpID int
 
 type Operation struct {
 	ID       OpID
-	Op       string
+	Name     string
 	Started  time.Time
 	Finished *time.Time
 	Err      error // failed if this is not nil

@@ -2,26 +2,29 @@ package manager
 
 import "time"
 
+type subID int
+
 type mockOpLog struct {
 	ops       []*Operation
 	nextID    OpID
 	opsByID   map[OpID]*Operation
-	tailChans []chan OpEvent
+	streams   map[subID]*mockStream
+	nextSubID subID
 }
 
 var _ OpLog = &mockOpLog{}
 
 func NewMockOpLog() *mockOpLog {
 	return &mockOpLog{
-		opsByID:   map[OpID]*Operation{},
-		ops:       nil,
-		tailChans: nil,
+		opsByID: map[OpID]*Operation{},
+		ops:     nil,
+		streams: map[subID]*mockStream{},
 	}
 }
 
 func (ol *mockOpLog) publish(evt OpEvent) {
-	for _, c := range ol.tailChans {
-		c <- evt
+	for _, stream := range ol.streams {
+		stream.c <- evt
 	}
 }
 
@@ -29,7 +32,7 @@ func (ol *mockOpLog) insertOp(opName string) *Operation {
 	op := &Operation{
 		ID:      ol.nextID,
 		Started: time.Now(),
-		Op:      opName,
+		Name:    opName,
 	}
 	ol.nextID++
 	ol.ops = append(ol.ops, op)
@@ -69,19 +72,34 @@ func (ol *mockOpLog) GetAll() []*Operation {
 	return ol.ops
 }
 
-func (ol *mockOpLog) Tail() chan OpEvent {
-	c := make(chan OpEvent)
-	// TODO: how does unsubscribing work?
-	ol.tailChans = append(ol.tailChans, c)
-	return c
+func (ol *mockOpLog) Get(id OpID) *Operation {
+	return ol.opsByID[id]
+}
+
+func (ol *mockOpLog) Tail() Stream {
+	subID := ol.nextSubID
+	stream := &mockStream{
+		id:  subID,
+		log: ol,
+		c:   make(chan OpEvent),
+	}
+	ol.streams[subID] = stream
+	return stream
+}
+
+func (ol *mockOpLog) unsubscribe(id subID) {
+	delete(ol.streams, id)
 }
 
 func (ol *mockOpLog) Wait(id OpID) error {
+	stream := ol.Tail()
+
 	op := ol.opsByID[id]
 	if op.Finished != nil {
 		return op.Err
 	}
-	for evt := range ol.Tail() {
+
+	for evt := range stream.Events() {
 		switch t := evt.(type) {
 		case *OpFailed:
 			if t.ID == id {
@@ -93,5 +111,22 @@ func (ol *mockOpLog) Wait(id OpID) error {
 			}
 		}
 	}
+
 	return nil
+}
+
+type mockStream struct {
+	log *mockOpLog
+	id  subID
+	c   chan OpEvent
+}
+
+var _ Stream = &mockStream{}
+
+func (ms mockStream) Events() chan OpEvent {
+	return ms.c
+}
+
+func (ms mockStream) Unsubscribe() {
+	ms.log.unsubscribe(ms.id)
 }

@@ -5,21 +5,39 @@ import (
 	"time"
 )
 
-// could break out InstanceStore
+type testingKnobs struct {
+	instanceStartDur    DurDist
+	instanceShutdownDur DurDist
+}
+
+var defaultKnobs = testingKnobs{
+	instanceShutdownDur: DurDist{3 * time.Second, 3 * time.Second},
+	instanceStartDur:    DurDist{3 * time.Second, 3 * time.Second},
+}
+
+var fastKnobs = testingKnobs{
+	instanceShutdownDur: DurDist{100 * time.Millisecond, 100 * time.Millisecond},
+	instanceStartDur:    DurDist{100 * time.Millisecond, 100 * time.Millisecond},
+}
+
+// TODO: break out InstanceStore
+// in-memory vs DB
 
 type mockRunner struct {
 	instancesByID map[InstanceID]*Instance
 	instances     []*Instance
 	nextID        InstanceID
 	opLog         OpLog
+	testingKnobs  testingKnobs
 }
 
 var _ Runner = &mockRunner{}
 
-func NewMockRunner(ol OpLog) *mockRunner {
+func NewMockRunner(ol OpLog, knobs testingKnobs) *mockRunner {
 	return &mockRunner{
 		instancesByID: map[InstanceID]*Instance{},
 		opLog:         ol,
+		testingKnobs:  knobs,
 	}
 }
 
@@ -37,9 +55,9 @@ func (mr *mockRunner) insertInstance(s InstanceSpec) *Instance {
 
 func (mr *mockRunner) Start(spec InstanceSpec) (*Instance, *Operation, error) {
 	i := mr.insertInstance(spec)
-	op := mr.opLog.OpStarted(fmt.Sprintf("start instance with spec %#v", spec))
+	op := mr.opLog.OpStarted(fmt.Sprintf("start instance with spec %+v", spec))
 	go func() {
-		sleepRandom(5*time.Second, 1*time.Second)
+		mr.testingKnobs.instanceStartDur.SleepRandom()
 		mr.opLog.OpSucceeded(op.ID)
 		i.State = StateRunning
 	}()
@@ -51,8 +69,8 @@ func (mr *mockRunner) ShutDown(id InstanceID) *Operation {
 	i.State = StateShuttingDown
 	op := mr.opLog.OpStarted(fmt.Sprintf("shutting down instance %#v", id))
 	go func() {
-		sleepRandom(5*time.Second, 1*time.Second)
-		i.State = StateRunning
+		mr.testingKnobs.instanceShutdownDur.SleepRandom()
+		i.State = StateShutDown
 		mr.opLog.OpSucceeded(op.ID)
 	}()
 	return op
