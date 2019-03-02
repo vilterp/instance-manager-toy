@@ -19,13 +19,13 @@ func NewMockOpLog() *mockOpLog {
 	}
 }
 
-func (ol mockOpLog) publish(evt OpEvent) {
+func (ol *mockOpLog) publish(evt OpEvent) {
 	for _, c := range ol.tailChans {
 		c <- evt
 	}
 }
 
-func (ol mockOpLog) insertOp(opName string) *Operation {
+func (ol *mockOpLog) insertOp(opName string) *Operation {
 	op := &Operation{
 		ID:      ol.nextID,
 		Started: time.Now(),
@@ -37,7 +37,7 @@ func (ol mockOpLog) insertOp(opName string) *Operation {
 	return op
 }
 
-func (ol mockOpLog) OpStarted(opName string) *Operation {
+func (ol *mockOpLog) OpStarted(opName string) *Operation {
 	op := ol.insertOp(opName)
 	ol.publish(&OpStarted{
 		Op: op,
@@ -45,31 +45,38 @@ func (ol mockOpLog) OpStarted(opName string) *Operation {
 	return op
 }
 
-func (ol mockOpLog) OpSucceeded(id OpID) {
+func (ol *mockOpLog) OpSucceeded(id OpID) {
 	op := ol.opsByID[id]
 	now := time.Now()
 	op.Finished = &now
+	ol.publish(&OpSucceeded{
+		ID: id,
+	})
 }
 
-func (ol mockOpLog) OpFailed(id OpID, err error) {
+func (ol *mockOpLog) OpFailed(id OpID, err error) {
 	op := ol.opsByID[id]
 	now := time.Now()
 	op.Finished = &now
 	op.Err = err
+	ol.publish(&OpFailed{
+		ID:  id,
+		Err: err,
+	})
 }
 
-func (ol mockOpLog) GetAll() []*Operation {
+func (ol *mockOpLog) GetAll() []*Operation {
 	return ol.ops
 }
 
-func (ol mockOpLog) Tail() chan OpEvent {
+func (ol *mockOpLog) Tail() chan OpEvent {
 	c := make(chan OpEvent)
 	// TODO: how does unsubscribing work?
 	ol.tailChans = append(ol.tailChans, c)
 	return c
 }
 
-func (ol mockOpLog) Wait(id OpID) error {
+func (ol *mockOpLog) Wait(id OpID) error {
 	op := ol.opsByID[id]
 	if op.Finished != nil {
 		return op.Err

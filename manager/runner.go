@@ -23,6 +23,7 @@ type Runner interface {
 	ShutDown(id InstanceID) *Operation
 	GetInstance(id InstanceID) *Instance
 	ListInstances() []*Instance
+	ListUpInstances() []*Instance
 	GetOpLog() OpLogReader
 }
 

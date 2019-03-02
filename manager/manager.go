@@ -50,12 +50,12 @@ func (m *Manager) Update(newSpec GroupSpec) error {
 
 // Diff returns nil if it's stable, or an error describing what's wrong.
 func (m *Manager) Diff() error {
-	return Matches(m.spec, m.runner.ListInstances())
+	return Matches(m.spec, m.runner.ListUpInstances())
 }
 
 func Matches(spec GroupSpec, instances []*Instance) error {
 	if len(instances) != spec.NumInstances {
-		return fmt.Errorf("want %d instancesByID; have %d", spec.NumInstances, len(instances))
+		return fmt.Errorf("want %d instances; have %d", spec.NumInstances, len(instances))
 	}
 	var wrongVersionIDs []InstanceID
 	for _, instance := range instances {
@@ -64,14 +64,21 @@ func Matches(spec GroupSpec, instances []*Instance) error {
 		}
 	}
 	if len(wrongVersionIDs) > 0 {
-		return fmt.Errorf("instancesByID %v are at the wrong version", wrongVersionIDs)
+		return fmt.Errorf("instances %v are at the wrong version", wrongVersionIDs)
 	}
 	return nil
 }
 
 func (m *Manager) WaitTilStable() {
-	for range m.runner.GetOpLog().Tail() {
-		if m.Diff() == nil {
+	diff := m.Diff()
+	fmt.Printf("waiting til stable. diff: %v\n", diff)
+	if diff == nil {
+		return
+	}
+	for op := range m.runner.GetOpLog().Tail() {
+		diff := m.Diff()
+		fmt.Printf("op: %#v; diff: %v\n", op, diff)
+		if diff == nil {
 			return
 		}
 	}

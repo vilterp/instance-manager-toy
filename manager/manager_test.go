@@ -9,9 +9,11 @@ func TestManager_Update(t *testing.T) {
 	runnerLog := NewMockOpLog()
 	runner := NewMockRunner(runnerLog)
 
+	tail := runnerLog.Tail()
+
 	go func() {
-		for evt := range runnerLog.Tail() {
-			fmt.Println("runner op:", evt)
+		for evt := range tail {
+			fmt.Printf("runner op: %#v\n", evt)
 		}
 	}()
 
