@@ -1,9 +1,12 @@
 package pure_manager
 
+import "fmt"
+
 type StateDB struct {
 	groupSpec GroupSpecDB
 	instances InstanceStateDB
-	opLog     OpLog
+	// TODO: really what this needs is op tree state
+	opLog OpLog
 }
 
 type Input interface {
@@ -59,5 +62,5 @@ func Decide(st StateDB, input Input) ActionNode {
 			return DoNothing{}
 		}
 	}
-	return DoNothing{}
+	panic(fmt.Sprintf("unknown input type: %T", input))
 }
