@@ -42,7 +42,6 @@ func (g *MockGraphDB) List() []*Task {
 }
 
 func (g *MockGraphDB) Insert(id TaskID, a actions.Action) TaskID {
-	fmt.Println("add", id.String(), a.String())
 	task := &Task{
 		ID:     id,
 		Action: a,
@@ -56,17 +55,14 @@ func (g *MockGraphDB) Insert(id TaskID, a actions.Action) TaskID {
 }
 
 func (g *MockGraphDB) AddDep(doFirst TaskID, thenDo TaskID) {
-	fmt.Println("addDep", doFirst, thenDo)
 	g.downstream[doFirst] = append(g.downstream[doFirst], thenDo)
 	g.upstream[thenDo] = append(g.upstream[thenDo], doFirst)
 }
 
 func (g *MockGraphDB) GetUnblockedTasks() []*Task {
-	fmt.Println("=============")
 	var out []*Task
 	for id := range g.waitingTasks {
 		upstreams := g.upstream[id]
-		fmt.Println(id.String(), g.tasks[id].Action.String(), "upstreams:", upstreams)
 		blocked := false
 		for _, upstreamID := range upstreams {
 			if g.tasks[upstreamID].Status != StatusSucceeded {
@@ -74,16 +70,18 @@ func (g *MockGraphDB) GetUnblockedTasks() []*Task {
 				break
 			}
 		}
-		fmt.Println(id.String(), g.tasks[id].Action.String(), "blocked:", blocked)
 		if !blocked {
 			out = append(out, g.tasks[id])
 		}
 	}
+	fmt.Println("GetUnblocked:", out)
 	return out
 }
 
 func (g *MockGraphDB) MarkStarted(id TaskID) {
-	g.tasks[id].Status = StatusRunning
+	t := g.tasks[id]
+	t.Status = StatusRunning
+	t.StartedAt = time.Now()
 	delete(g.waitingTasks, id)
 }
 

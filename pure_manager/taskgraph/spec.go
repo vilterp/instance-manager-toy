@@ -20,6 +20,15 @@ func NewSpec() *Spec {
 	}
 }
 
+func (s *Spec) ParIDs(list []TaskID) TaskID {
+	id := TaskID(uuid.New())
+	s.Tasks[id] = &TaskSpec{
+		Action:   actions.DoNothing{},
+		Upstream: list,
+	}
+	return id
+}
+
 func (s *Spec) Par(list []actions.Action) TaskID {
 	var ids []TaskID
 	for _, action := range list {

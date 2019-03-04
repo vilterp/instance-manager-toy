@@ -2,7 +2,6 @@ package taskgraph
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/cockroachlabs/instance_manager/pure_manager/actions"
 )
@@ -11,6 +10,9 @@ type GraphRunner struct {
 	db           StateDB
 	actionRunner actions.Runner
 	events       chan TaskEvent
+
+	running int
+	toDo    int
 }
 
 func NewGraphRunner(db StateDB, runner actions.Runner) *GraphRunner {
@@ -18,46 +20,41 @@ func NewGraphRunner(db StateDB, runner actions.Runner) *GraphRunner {
 		events:       make(chan TaskEvent),
 		actionRunner: runner,
 		db:           db,
+		toDo:         len(db.List()),
 	}
 }
 
 func (g *GraphRunner) Run() {
-	toDo := len(g.db.List())
-	running := 0
-
-	g.runNext(running)
-	for toDo > 0 {
+	g.runNext()
+	for g.toDo > 0 {
+		fmt.Println("todo", g.toDo, "running", g.running)
+		g.runNext()
 		evt := <-g.events
 		switch tEvt := evt.(type) {
-		case *TaskStarted:
-			g.db.MarkStarted(tEvt.ID)
-			running++
 		case *TaskSucceeeded:
 			g.db.MarkSucceeded(tEvt.ID)
-			toDo--
-			fmt.Println("succeeded; run next")
-			g.runNext(running)
+			g.toDo--
+			g.running--
 		case *TaskFailed:
 			g.db.MarkFailed(tEvt.ID, tEvt.Err)
-			toDo--
-			g.runNext(running)
+			g.toDo--
+			g.running--
 		}
 	}
 }
 
-func (g GraphRunner) runNext(numRunning int) {
+func (g *GraphRunner) runNext() {
 	unblocked := g.db.GetUnblockedTasks()
-	if len(unblocked) == 0 && numRunning == 0 {
+	if len(unblocked) == 0 && g.running == 0 {
 		panic("no unblocked tasks and nothing running")
 	}
-	log.Println("unblocked:", unblocked)
 	for _, t := range unblocked {
 		// Go gotcha: bind vars here or they won't work in the closure
 		tID := t.ID
 		tAction := t.Action
-		fmt.Println("about to run", tID.String())
+		g.db.MarkStarted(tID)
+		g.running++
 		go func() {
-			g.events <- &TaskStarted{tID}
 			err := g.actionRunner.Run(tAction)
 			if err != nil {
 				g.events <- &TaskFailed{
