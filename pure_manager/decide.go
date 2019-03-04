@@ -3,10 +3,10 @@ package pure_manager
 import "fmt"
 
 type StateDB struct {
-	groupSpec GroupSpecDB
-	instances InstanceStateDB
-	// TODO: really what this needs is op tree state
-	opLog OpLog
+	groupSpec  GroupSpecDB
+	instances  InstanceStateDB
+	taskGraphs TaskGraphsDB
+	opLog      OpLog
 }
 
 type Input interface {
