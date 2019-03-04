@@ -20,6 +20,12 @@ type Action interface {
 	String() string
 }
 
+type DoNothing struct {
+}
+
+func (DoNothing) Action()        {}
+func (DoNothing) String() string { return "DoNothing" }
+
 type StartInstance struct {
 	Spec base.InstanceSpec
 }

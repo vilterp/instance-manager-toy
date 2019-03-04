@@ -4,24 +4,18 @@ import (
 	"time"
 
 	"github.com/cockroachlabs/instance_manager/pure_manager/actions"
-
 	"github.com/google/uuid"
 )
 
-type Spec struct {
-	Tasks map[TaskID]*TaskSpec
-}
-
-type TaskSpec struct {
-	Action   actions.Action
-	Upstream []TaskID
-}
-
 type TaskID uuid.UUID
+
+func (t TaskID) String() string {
+	return uuid.UUID(t).String()
+}
 
 // Supposed to be threadsafe
 type StateDB interface {
-	Insert(a actions.Action) TaskID
+	Insert(id TaskID, a actions.Action) TaskID
 	AddDep(doFirst TaskID, thenDo TaskID)
 	GetUnblockedTasks() []*Task
 	List() []*Task

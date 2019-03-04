@@ -1,12 +1,15 @@
 package pure_manager
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/cockroachlabs/instance_manager/pure_manager/base"
+)
 
 type StateDB struct {
 	groupSpec  GroupSpecDB
 	instances  InstanceStateDB
 	taskGraphs TaskGraphsDB
-	opLog      OpLog
 }
 
 type Input interface {
@@ -20,7 +23,7 @@ type CommandInput struct {
 func (ci CommandInput) Input() {}
 
 type HealthcheckInput struct {
-	ID                InstanceID
+	ID                base.InstanceID
 	HealthcheckResult HealthCheckResult
 }
 

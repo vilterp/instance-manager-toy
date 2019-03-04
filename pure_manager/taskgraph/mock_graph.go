@@ -1,10 +1,10 @@
 package taskgraph
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/cockroachlabs/instance_manager/pure_manager/actions"
-	"github.com/google/uuid"
 )
 
 type MockGraphDB struct {
@@ -19,12 +19,13 @@ var _ StateDB = &MockGraphDB{}
 
 func NewMockGraphDB(s *Spec) *MockGraphDB {
 	g := &MockGraphDB{
-		tasks:      map[TaskID]*Task{},
-		downstream: map[TaskID][]TaskID{},
-		upstream:   map[TaskID][]TaskID{},
+		tasks:        map[TaskID]*Task{},
+		downstream:   map[TaskID][]TaskID{},
+		upstream:     map[TaskID][]TaskID{},
+		waitingTasks: map[TaskID]struct{}{},
 	}
 	for tID, taskSpec := range s.Tasks {
-		g.Insert(taskSpec.Action)
+		g.Insert(tID, taskSpec.Action)
 		for _, upstream := range taskSpec.Upstream {
 			g.AddDep(upstream, tID)
 		}
@@ -40,8 +41,8 @@ func (g *MockGraphDB) List() []*Task {
 	return out
 }
 
-func (g *MockGraphDB) Insert(a actions.Action) TaskID {
-	id := TaskID(uuid.New())
+func (g *MockGraphDB) Insert(id TaskID, a actions.Action) TaskID {
+	fmt.Println("add", id.String(), a.String())
 	task := &Task{
 		ID:     id,
 		Action: a,
@@ -55,19 +56,27 @@ func (g *MockGraphDB) Insert(a actions.Action) TaskID {
 }
 
 func (g *MockGraphDB) AddDep(doFirst TaskID, thenDo TaskID) {
+	fmt.Println("addDep", doFirst, thenDo)
 	g.downstream[doFirst] = append(g.downstream[doFirst], thenDo)
 	g.upstream[thenDo] = append(g.upstream[thenDo], doFirst)
 }
 
 func (g *MockGraphDB) GetUnblockedTasks() []*Task {
-	var out []TaskID
-	for id, task := range g.waitingTasks {
+	fmt.Println("=============")
+	var out []*Task
+	for id := range g.waitingTasks {
 		upstreams := g.upstream[id]
+		fmt.Println(id.String(), g.tasks[id].Action.String(), "upstreams:", upstreams)
+		blocked := false
 		for _, upstreamID := range upstreams {
 			if g.tasks[upstreamID].Status != StatusSucceeded {
+				blocked = true
 				break
 			}
-			out = append(out, task)
+		}
+		fmt.Println(id.String(), g.tasks[id].Action.String(), "blocked:", blocked)
+		if !blocked {
+			out = append(out, g.tasks[id])
 		}
 	}
 	return out

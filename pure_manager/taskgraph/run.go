@@ -1,25 +1,21 @@
 package taskgraph
 
-import "github.com/cockroachlabs/instance_manager/pure_manager/actions"
+import (
+	"fmt"
+	"log"
 
-type failureReport struct {
-	taskID TaskID
-	err    error
-}
+	"github.com/cockroachlabs/instance_manager/pure_manager/actions"
+)
 
 type GraphRunner struct {
 	db           StateDB
 	actionRunner actions.Runner
-	started      chan TaskID
-	succeeded    chan TaskID
-	failed       chan failureReport
+	events       chan TaskEvent
 }
 
 func NewGraphRunner(db StateDB, runner actions.Runner) *GraphRunner {
 	return &GraphRunner{
-		started:      make(chan TaskID),
-		succeeded:    make(chan TaskID),
-		failed:       make(chan failureReport),
+		events:       make(chan TaskEvent),
 		actionRunner: runner,
 		db:           db,
 	}
@@ -27,35 +23,79 @@ func NewGraphRunner(db StateDB, runner actions.Runner) *GraphRunner {
 
 func (g *GraphRunner) Run() {
 	toDo := len(g.db.List())
+	running := 0
 
+	g.runNext(running)
 	for toDo > 0 {
-		select {
-		case succID := <-g.succeeded:
-			g.db.MarkSucceeded(succID)
+		evt := <-g.events
+		switch tEvt := evt.(type) {
+		case *TaskStarted:
+			g.db.MarkStarted(tEvt.ID)
+			running++
+		case *TaskSucceeeded:
+			g.db.MarkSucceeded(tEvt.ID)
 			toDo--
-			g.runNext()
-		case report := <-g.failed:
-			g.db.MarkFailed(report.taskID, report.err)
+			fmt.Println("succeeded; run next")
+			g.runNext(running)
+		case *TaskFailed:
+			g.db.MarkFailed(tEvt.ID, tEvt.Err)
 			toDo--
-			g.runNext()
+			g.runNext(running)
 		}
 	}
 }
 
-func (g GraphRunner) runNext() {
+func (g GraphRunner) runNext(numRunning int) {
 	unblocked := g.db.GetUnblockedTasks()
+	if len(unblocked) == 0 && numRunning == 0 {
+		panic("no unblocked tasks and nothing running")
+	}
+	log.Println("unblocked:", unblocked)
 	for _, t := range unblocked {
+		// Go gotcha: bind vars here or they won't work in the closure
+		tID := t.ID
+		tAction := t.Action
+		fmt.Println("about to run", tID.String())
 		go func() {
-			g.started <- t.ID
-			err := g.actionRunner.Run(t.Action)
+			g.events <- &TaskStarted{tID}
+			err := g.actionRunner.Run(tAction)
 			if err != nil {
-				g.failed <- failureReport{
-					err:    err,
-					taskID: t.ID,
+				g.events <- &TaskFailed{
+					Err: err,
+					ID:  tID,
 				}
 			} else {
-				g.succeeded <- t.ID
+				g.events <- &TaskSucceeeded{tID}
 			}
 		}()
 	}
+}
+
+type TaskEvent interface {
+	TaskID() TaskID
+}
+
+type TaskStarted struct {
+	ID TaskID
+}
+
+func (ts *TaskStarted) TaskID() TaskID {
+	return ts.ID
+}
+
+type TaskSucceeeded struct {
+	ID TaskID
+}
+
+func (ts *TaskSucceeeded) TaskID() TaskID {
+	return ts.ID
+}
+
+type TaskFailed struct {
+	ID  TaskID
+	Err error
+}
+
+func (tf *TaskFailed) TaskID() TaskID {
+	return tf.ID
 }
