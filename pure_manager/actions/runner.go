@@ -4,6 +4,8 @@ import (
 	"log"
 	"sync"
 	"time"
+
+	"github.com/cockroachlabs/instance_manager/pure_manager/util"
 )
 
 type Runner interface {
@@ -21,11 +23,13 @@ func NewMockRunner() *MockRunner {
 
 var _ Runner = &MockRunner{}
 
+var dist = util.DurDist{Base: 1 * time.Second, Variance: 1 * time.Second}
+
 func (m *MockRunner) Run(a Action) error {
 	log.Println("running", a.String())
-	time.Sleep(1 * time.Second)
 	m.mu.Lock()
 	m.Log = append(m.Log, a)
 	m.mu.Unlock()
+	dist.SleepRandom()
 	return nil
 }
