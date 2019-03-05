@@ -24,6 +24,39 @@ func NewGraphRunner(db StateDB, runner actions.Runner) *GraphRunner {
 	}
 }
 
+func (g *GraphRunner) Plan(e TaskEvent) []*Task {
+	tasks := g.db.GetUnblockedTasks()
+	for _, t := range tasks {
+		g.db.MarkStarted(t.ID)
+	}
+	return tasks
+}
+
+func (g *GraphRunner) Apply(plan []*Task) {
+	for _, t := range plan {
+		// Go gotcha: bind vars here or they won't work in the closure
+		tID := t.ID
+		tAction := t.Action
+		g.running++
+		go func() {
+			err := g.actionRunner.Run(tAction)
+			if err != nil {
+				g.events <- &TaskFailed{
+					Err: err,
+					ID:  tID,
+				}
+			} else {
+				g.events <- &TaskSucceeeded{tID}
+			}
+		}()
+	}
+}
+
+func Run(db StateDB, runner actions.Runner) {
+	gRunner := NewGraphRunner(db, runner)
+	plan := gRunner.Plan()
+}
+
 func (g *GraphRunner) Run() {
 	g.runNext()
 	for g.toDo > 0 {

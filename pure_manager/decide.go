@@ -3,6 +3,8 @@ package pure_manager
 import (
 	"fmt"
 
+	"github.com/cockroachlabs/instance_manager/pure_manager/taskgraph"
+
 	"github.com/cockroachlabs/instance_manager/pure_manager/base"
 )
 
@@ -30,7 +32,8 @@ type HealthcheckInput struct {
 func (hcr HealthcheckInput) Input() {}
 
 type OpEventInput struct {
-	OpEvent OpEvent
+	GraphID   TaskGraphID
+	TaskEvent taskgraph.TaskEvent
 }
 
 func (oi OpEventInput) Input() {}
@@ -49,6 +52,7 @@ func Decide(st StateDB, input Input) ActionNode {
 		st.instances.UpdateHealthStatus(tInput.ID, tInput.HealthcheckResult)
 		return DoNothing{}
 	case *OpEventInput:
+		st.taskGraphs.GetState(tInput.GraphID)
 		// TODO: replace with list of outstanding actions
 		//   + action tree interpreter
 		switch tEvt := tInput.OpEvent.(type) {
