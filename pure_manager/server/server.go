@@ -38,7 +38,7 @@ func (s *Server) UpdateSpec(ctx context.Context, req *proto.UpdateSpecRequest) (
 	// TODO: run graph
 	log.Printf("UpdateSpec: returning %#v", graph)
 	return &proto.UpdateSpecResponse{
-		GraphId: graph.Id,
+		Graph: graph,
 	}, nil
 }
 

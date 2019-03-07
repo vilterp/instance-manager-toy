@@ -31,7 +31,7 @@ message UpdateSpecRequest {
 }
 
 message UpdateSpecResponse {
-  string graph_id = 1;
+  TaskGraph graph = 1;
 }
 
 message GetCurrentSpecRequest {}

@@ -10,8 +10,6 @@ import (
 )
 
 func main() {
-	fmt.Println("hello this is the client")
-
 	addr := "0.0.0.0:8888"
 
 	conn, err := grpc.Dial(addr, grpc.WithInsecure())
@@ -26,24 +24,25 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println(resp)
+	fmt.Println("\t", resp)
 
-	fmt.Println("update:")
+	newSpec := &proto.GroupSpec{
+		NumInstances: 3,
+		Version:      1,
+	}
+	fmt.Println("update to", newSpec)
 	resp2, err2 := client.UpdateSpec(ctx, &proto.UpdateSpecRequest{
-		Spec: &proto.GroupSpec{
-			NumInstances: 3,
-			Version:      1,
-		},
+		Spec: newSpec,
 	})
 	if err2 != nil {
 		log.Fatal(err2)
 	}
-	fmt.Println("graph id", resp2.GraphId)
+	fmt.Println("\tgraph", resp2.Graph)
 
 	fmt.Println("stream tasks:")
 	// TODO: get initial to avoid race condition
 	resp3, err3 := client.StreamTasks(ctx, &proto.StreamTasksRequest{
-		GraphId:        resp2.GraphId,
+		GraphId:        resp2.Graph.Id,
 		IncludeInitial: true,
 	})
 	if err3 != nil {
@@ -55,6 +54,6 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		fmt.Println("evt:", evt)
+		fmt.Println("\tevt:", evt)
 	}
 }
