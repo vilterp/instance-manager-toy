@@ -1,8 +1,7 @@
-package server
+package db
 
 import (
 	"github.com/cockroachlabs/instance_manager/pure_manager/proto"
-	"github.com/cockroachlabs/instance_manager/pure_manager/taskgraph"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/google/uuid"
 )
@@ -13,12 +12,12 @@ type TaskGraphID string
 type TaskGraphsDB interface {
 	Insert(g *proto.TaskGraphSpec) *proto.TaskGraph
 	List() []*proto.TaskGraph
-	GetState(id TaskGraphID) taskgraph.StateDB
+	GetState(id TaskGraphID) TasksDB
 }
 
 type MockTaskGraphsDB struct {
 	graphs      map[TaskGraphID]*proto.TaskGraph
-	graphStates map[TaskGraphID]taskgraph.StateDB
+	graphStates map[TaskGraphID]TasksDB
 }
 
 func (g *MockTaskGraphsDB) List() []*proto.TaskGraph {
@@ -29,7 +28,7 @@ func (g *MockTaskGraphsDB) List() []*proto.TaskGraph {
 	return out
 }
 
-func (g *MockTaskGraphsDB) GetState(id TaskGraphID) taskgraph.StateDB {
+func (g *MockTaskGraphsDB) GetState(id TaskGraphID) TasksDB {
 	return g.graphStates[id]
 }
 
@@ -38,7 +37,7 @@ var _ TaskGraphsDB = &MockTaskGraphsDB{}
 func NewMockTaskGraphsDB() *MockTaskGraphsDB {
 	return &MockTaskGraphsDB{
 		graphs:      map[TaskGraphID]*proto.TaskGraph{},
-		graphStates: map[TaskGraphID]taskgraph.StateDB{},
+		graphStates: map[TaskGraphID]TasksDB{},
 	}
 }
 
@@ -53,6 +52,6 @@ func (g *MockTaskGraphsDB) Insert(spec *proto.TaskGraphSpec) *proto.TaskGraph {
 		CreatedAt: ptypes.TimestampNow(),
 	}
 	g.graphs[id] = graph
-	g.graphStates[id] = taskgraph.NewMockGraphDB(spec)
+	g.graphStates[id] = NewMockTasksDB(spec)
 	return graph
 }

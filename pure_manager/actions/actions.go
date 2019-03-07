@@ -5,6 +5,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/cockroachlabs/instance_manager/pure_manager/db"
 	"github.com/cockroachlabs/instance_manager/pure_manager/proto"
 	"github.com/cockroachlabs/instance_manager/pure_manager/util"
 )
@@ -18,7 +19,7 @@ type MockRunner struct {
 	Log []*proto.Action
 }
 
-func NewMockRunner() *MockRunner {
+func NewMockRunner(db *db.NodeStateDB) *MockRunner {
 	return &MockRunner{}
 }
 

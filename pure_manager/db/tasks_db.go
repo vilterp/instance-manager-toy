@@ -1,4 +1,4 @@
-package taskgraph
+package db
 
 import (
 	"fmt"
@@ -6,6 +6,21 @@ import (
 	"github.com/cockroachlabs/instance_manager/pure_manager/proto"
 	"github.com/golang/protobuf/ptypes"
 )
+
+type TasksDB interface {
+	Insert(id proto.TaskID, a *proto.Action) proto.TaskID
+	AddDep(doFirst proto.TaskID, thenDo proto.TaskID)
+	GetUnblockedTasks() []*proto.Task
+	List() []*proto.Task
+	Stream() chan *proto.TaskEvent
+
+	MarkStarted(id proto.TaskID)
+	MarkSucceeded(id proto.TaskID)
+	MarkFailed(id proto.TaskID, err string)
+	MarkGraphDone()
+
+	// TODO: tail?
+}
 
 type MockGraphDB struct {
 	tasks      map[proto.TaskID]*proto.Task
@@ -28,9 +43,9 @@ func (g *MockGraphDB) Print() {
 	}
 }
 
-var _ StateDB = &MockGraphDB{}
+var _ TasksDB = &MockGraphDB{}
 
-func NewMockGraphDB(s *proto.TaskGraphSpec) *MockGraphDB {
+func NewMockTasksDB(s *proto.TaskGraphSpec) *MockGraphDB {
 	g := &MockGraphDB{
 		tasks:        map[proto.TaskID]*proto.Task{},
 		downstream:   map[proto.TaskID][]proto.TaskID{},

@@ -1,4 +1,4 @@
-package server
+package db
 
 import "github.com/cockroachlabs/instance_manager/pure_manager/proto"
 
@@ -7,7 +7,7 @@ type NodeStateDB interface {
 	ListHealthy() []*proto.Node
 
 	Insert(*proto.Node)
-	UpdateHealthStatus(id proto.NodeID, res HealthCheckResult)
+	//UpdateHealthStatus(id proto.NodeID, res HealthCheckResult)
 }
 
 // TODO: runner

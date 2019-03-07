@@ -4,11 +4,12 @@ import (
 	"log"
 
 	"github.com/cockroachlabs/instance_manager/pure_manager/actions"
+	"github.com/cockroachlabs/instance_manager/pure_manager/db"
 	"github.com/cockroachlabs/instance_manager/pure_manager/proto"
 )
 
 type GraphRunner struct {
-	db           StateDB
+	db           db.TasksDB
 	actionRunner actions.Runner
 	events       chan *proto.TaskEvent
 
@@ -16,7 +17,7 @@ type GraphRunner struct {
 	toDo    int
 }
 
-func NewGraphRunner(db StateDB, runner actions.Runner) *GraphRunner {
+func NewGraphRunner(db db.TasksDB, runner actions.Runner) *GraphRunner {
 	return &GraphRunner{
 		events:       make(chan *proto.TaskEvent),
 		actionRunner: runner,

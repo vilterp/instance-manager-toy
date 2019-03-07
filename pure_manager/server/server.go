@@ -3,24 +3,24 @@ package server
 import (
 	"context"
 
-	"github.com/cockroachlabs/instance_manager/pure_manager/taskgraph"
-
 	"github.com/cockroachlabs/instance_manager/pure_manager/actions"
-
+	"github.com/cockroachlabs/instance_manager/pure_manager/db"
 	"github.com/cockroachlabs/instance_manager/pure_manager/proto"
+	"github.com/cockroachlabs/instance_manager/pure_manager/taskgraph"
 )
 
 type Server struct {
-	db           *StateDB
+	db           *db.StateDB
 	actionRunner actions.Runner
 }
 
 var _ proto.GroupManagerServer = &Server{}
 
 func NewServer() *Server {
+	db := db.NewStateDB()
 	return &Server{
-		db:           NewStateDB(),
-		actionRunner: actions.NewMockRunner(),
+		db:           db,
+		actionRunner: actions.NewMockRunner(&db.Nodes),
 	}
 }
 
@@ -30,8 +30,8 @@ func (s *Server) UpdateSpec(ctx context.Context, req *proto.UpdateSpecRequest) (
 			UpdateSpec: req,
 		},
 	})
-	graph := s.db.taskGraphs.Insert(graphSpec)
-	graphState := s.db.taskGraphs.GetState(TaskGraphID(graph.Id))
+	graph := s.db.TaskGraphs.Insert(graphSpec)
+	graphState := s.db.TaskGraphs.GetState(db.TaskGraphID(graph.Id))
 	runner := taskgraph.NewGraphRunner(graphState, s.actionRunner)
 	go func() {
 		runner.Run()
@@ -48,7 +48,7 @@ func (s *Server) KillNode(context.Context, *proto.KillNodeRequest) (*proto.KillN
 
 func (s *Server) GetCurrentSpec(context.Context, *proto.GetCurrentSpecRequest) (*proto.GetCurrentSpecResponse, error) {
 	return &proto.GetCurrentSpecResponse{
-		Spec: s.db.groupSpec.GetCurrent(),
+		Spec: s.db.GroupSpec.GetCurrent(),
 	}, nil
 }
 
@@ -77,7 +77,7 @@ func (s *Server) GetTasks(context.Context, *proto.GetTasksRequest) (*proto.GetTa
 }
 
 func (s *Server) StreamTasks(req *proto.StreamTasksRequest, srv proto.GroupManager_StreamTasksServer) error {
-	st := s.db.taskGraphs.GetState(TaskGraphID(req.GraphId))
+	st := s.db.TaskGraphs.GetState(db.TaskGraphID(req.GraphId))
 	if req.IncludeInitial {
 		for _, t := range st.List() {
 			var b []byte
