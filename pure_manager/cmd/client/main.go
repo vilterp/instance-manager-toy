@@ -52,7 +52,7 @@ func main() {
 	for {
 		evt, err := resp3.Recv()
 		if err != nil {
-			log.Fatal(err)
+			log.Fatalf("%#v", err)
 		}
 		fmt.Println("\tevt:", evt)
 	}

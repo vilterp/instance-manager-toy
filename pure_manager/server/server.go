@@ -2,7 +2,6 @@ package server
 
 import (
 	"context"
-	"log"
 
 	"github.com/cockroachlabs/instance_manager/pure_manager/taskgraph"
 
@@ -34,9 +33,10 @@ func (s *Server) UpdateSpec(ctx context.Context, req *proto.UpdateSpecRequest) (
 	graph := s.db.taskGraphs.Insert(graphSpec)
 	graphState := s.db.taskGraphs.GetState(TaskGraphID(graph.Id))
 	runner := taskgraph.NewGraphRunner(graphState, s.actionRunner)
-	go runner.Run()
-	// TODO: run graph
-	log.Printf("UpdateSpec: returning %#v", graph)
+	go func() {
+		runner.Run()
+		graphState.MarkGraphDone()
+	}()
 	return &proto.UpdateSpecResponse{
 		Graph: graph,
 	}, nil
@@ -96,7 +96,6 @@ func (s *Server) StreamTasks(req *proto.StreamTasksRequest, srv proto.GroupManag
 		}
 	}
 	for evt := range st.Stream() {
-		log.Println("evt:", evt, "srv:", srv)
 		if err := srv.Send(evt); err != nil {
 			return err
 		}

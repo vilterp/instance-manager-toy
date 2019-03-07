@@ -217,11 +217,14 @@ message TaskEvent {
     string error = 3;
   }
 
+  message GraphDone {}
+
   oneof event {
     InitialState initial = 1;
     Started started = 2;
     Succeeded succeeded = 3;
     Failed failed = 4;
+    GraphDone done = 5;
   }
 }
 

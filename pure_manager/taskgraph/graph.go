@@ -15,6 +15,7 @@ type StateDB interface {
 	MarkStarted(id proto.TaskID)
 	MarkSucceeded(id proto.TaskID)
 	MarkFailed(id proto.TaskID, err string)
+	MarkGraphDone()
 
 	// TODO: tail?
 }

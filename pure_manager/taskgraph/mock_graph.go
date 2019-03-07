@@ -2,7 +2,6 @@ package taskgraph
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/cockroachlabs/instance_manager/pure_manager/proto"
 	"github.com/golang/protobuf/ptypes"
@@ -137,11 +136,23 @@ func (g *MockGraphDB) MarkFailed(id proto.TaskID, err string) {
 	})
 }
 
+func (g *MockGraphDB) MarkGraphDone() {
+	g.publish(&proto.TaskEvent{
+		Event: &proto.TaskEvent_Done{
+			Done: &proto.TaskEvent_GraphDone{},
+		},
+	})
+}
+
 func (g *MockGraphDB) publish(evt *proto.TaskEvent) {
-	log.Println("publishing", evt)
 	for _, c := range g.eventSubs {
 		// TODO: one of these could block the rest...
-		c <- evt
+		switch evt.Event.(type) {
+		case *proto.TaskEvent_Done:
+			close(c)
+		default:
+			c <- evt
+		}
 	}
 	// TODO: close the conns when the last task succeeds
 }
