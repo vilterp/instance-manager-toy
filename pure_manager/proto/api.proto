@@ -3,11 +3,11 @@ syntax = "proto3";
 import "google/protobuf/timestamp.proto";
 
 enum NodeState {
-  Starting = 0;
-  Running = 1;
-  Unhealthy = 2;
-  ShuttingDown = 3;
-  ShutDown = 4;
+  NodeStarting = 0;
+  NodeRunning = 1;
+  NodeUnhealthy = 2;
+  NodeShuttingDown = 3;
+  NodeShutDown = 4;
 }
 
 message Node {
@@ -74,7 +74,7 @@ message NodeEvent {
 
   message StateChanged {
     string id = 1;
-    NodeState = 2;
+    NodeState new_state = 2;
   }
 
   oneof event {
@@ -91,11 +91,11 @@ message ListTaskGraphsResponse {
 }
 
 enum TaskGraphState {
-  Running = 0;
+  TaskGraphRunning = 0;
   // Encountered an error, but some tasks still running.
-  RunningErrored = 1;
-  Failed = 2;
-  Succeeded = 3;
+  TaskGraphRunningErrored = 1;
+  TaskGraphFailed = 2;
+  TaskGraphSucceeded = 3;
 }
 
 message TaskGraph {
@@ -132,9 +132,9 @@ message ShutDownNode {
 }
 
 enum TaskState {
-  Running = 0;
-  Failed = 1;
-  Succeeded = 2;
+  TaskRunning = 0;
+  TaskFailed = 1;
+  TaskSucceeded = 2;
 }
 
 message StreamTaskGraphsRequest {
