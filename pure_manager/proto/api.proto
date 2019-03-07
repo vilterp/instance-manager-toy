@@ -1,0 +1,237 @@
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+
+enum NodeState {
+  Starting = 0;
+  Running = 1;
+  Unhealthy = 2;
+  ShuttingDown = 3;
+  ShutDown = 4;
+}
+
+message Node {
+  string id = 1;
+  int64 version = 2;
+  NodeState state = 3;
+}
+
+message NodeSpec {
+  int64 version = 1;
+}
+
+message GroupSpec {
+  int64 num_instances = 1;
+  int64 version = 2;
+}
+
+message UpdateSpecRequest {
+  GroupSpec spec = 1;
+}
+
+message UpdateSpecResponse {
+  TaskGraph graph = 1;
+}
+
+message GetCurrentSpecRequest {}
+
+message GetCurrentSpecResponse {
+  GroupSpecInfo spec = 1;
+}
+
+message GroupSpecInfo {
+  GroupSpec spec = 1;
+  google.protobuf.Timestamp created_at = 2;
+  string created_by_user = 3;
+}
+
+message ListSpecsRequest {}
+
+message ListSpecsResponse {
+  repeated GroupSpecInfo infos = 1;
+}
+
+message ListNodesRequest {
+
+}
+
+message ListNodesResponse {
+  repeated Node instances = 1;
+}
+
+message StreamNodesRequest {
+
+}
+
+message NodeEvent {
+  message InitialList {
+    repeated Node nodes = 2;
+  }
+
+  message Started {
+    Node node = 1;
+  }
+
+  message StateChanged {
+    string id = 1;
+    NodeState = 2;
+  }
+
+  oneof event {
+    Started started = 1;
+    StateChanged state_changed = 2;
+  }
+}
+
+message ListTaskGraphsRequest {
+}
+
+message ListTaskGraphsResponse {
+  repeated TaskGraph task_graphs = 1;
+}
+
+enum TaskGraphState {
+  Running = 0;
+  // Encountered an error, but some tasks still running.
+  RunningErrored = 1;
+  Failed = 2;
+  Succeeded = 3;
+}
+
+message TaskGraph {
+  string id = 1;
+  google.protobuf.Timestamp started_at = 2;
+  google.protobuf.Timestamp finished_at = 3;
+  TaskGraphState state = 4;
+  TaskGraphSpec spec = 5;
+  repeated Task tasks = 6;
+}
+
+message TaskGraphSpec {
+  repeated TaskSpec tasks = 1;
+}
+
+message TaskSpec {
+  Action action = 1;
+  repeated string prereq_task_ids = 2;
+}
+
+message Action {
+  oneof action {
+    StartNode start_node = 1;
+    ShutDownNode shut_down_node = 2;
+  }
+}
+
+message StartNode {
+  NodeSpec spec = 1;
+}
+
+message ShutDownNode {
+  string node_id = 2;
+}
+
+enum TaskState {
+  Running = 0;
+  Failed = 1;
+  Succeeded = 2;
+}
+
+message StreamTaskGraphsRequest {
+  bool include_initial = 1;
+}
+
+message TaskGraphEvent {
+  message InitialList {
+    repeated TaskGraph graphs = 1;
+  }
+
+  message Started {
+    TaskGraph graph = 1;
+  }
+
+  message Succeeded {
+    string id = 1;
+  }
+
+  message Failed {
+    string id = 2;
+    // TODO: but which task failed tho?
+    string error = 3;
+  }
+
+  oneof event {
+    InitialList initial = 1;
+    Started started = 2;
+    Succeeded succeeded = 3;
+    Failed failed = 4;
+  }
+}
+
+message Task {
+  string id = 1;
+  Action action = 2;
+  TaskState state = 3;
+  google.protobuf.Timestamp started_at = 4;
+  google.protobuf.Timestamp finished_at = 5;
+  string error = 6;
+  repeated string prereq_task_ids = 7;
+}
+
+message GetTasksRequest {
+  string task_graph_id = 1;
+}
+
+message GetTasksResponse {
+  repeated Task tasks = 2;
+}
+
+message StreamTasksRequest {
+  string graph_id = 1;
+  bool include_initial = 2;
+}
+
+message TaskEvent {
+  message InitialState {
+    repeated Task tasks = 1;
+  }
+
+  message Started {
+    string id = 1;
+  }
+
+  message Succeeded {
+    string id = 1;
+  }
+
+  message Failed {
+    string id = 1;
+    string error = 3;
+  }
+
+  oneof event {
+    InitialState initial = 1;
+    Started started = 2;
+    Succeeded succeeded = 3;
+    Failed failed = 4;
+  }
+}
+
+service GroupManager {
+  // Specs
+  rpc UpdateSpec(UpdateSpecRequest) returns (UpdateSpecResponse);
+  rpc GetCurrentSpec(GetCurrentSpecRequest) returns (GetCurrentSpecResponse);
+  rpc ListSpecs(ListSpecsRequest) returns (ListSpecsResponse);
+
+  // Nodes
+  rpc ListNodes(ListNodesRequest) returns (ListNodesResponse);
+  rpc StreamNodes(StreamNodesRequest) returns (stream NodeEvent);
+
+  // Task graphs
+  rpc ListTaskGraphs(ListTaskGraphsRequest) returns (ListTaskGraphsResponse);
+  rpc StreamTaskGraphs(StreamTaskGraphsRequest) returns (stream TaskGraphEvent);
+
+  // Tasks
+  rpc GetTasks(GetTasksRequest) returns (GetTasksResponse);
+  rpc StreamTasks(StreamTasksRequest) returns (stream TaskEvent);
+}

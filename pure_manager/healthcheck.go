@@ -1,6 +1,6 @@
 package pure_manager
 
-import "github.com/cockroachlabs/instance_manager/pure_manager/base"
+import "github.com/cockroachlabs/instance_manager/pure_manager/proto"
 
 type HealthCheckResult interface {
 	HealthCheckRes()
@@ -18,5 +18,5 @@ type HealthErr struct {
 func (he HealthErr) HealthCheckRes() {}
 
 type HealthChecker interface {
-	HealthCheck(id base.InstanceID) HealthCheckResult
+	HealthCheck(id proto.InstanceID) HealthCheckResult
 }

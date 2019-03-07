@@ -1,52 +1,52 @@
 package pure_manager
 
-import "github.com/cockroachlabs/instance_manager/pure_manager/base"
+import "github.com/cockroachlabs/instance_manager/pure_manager/proto"
 
 type InstanceStateDB interface {
-	List() []*base.Instance
-	ListHealthy() []*base.Instance
+	List() []*proto.Instance
+	ListHealthy() []*proto.Instance
 
-	Insert(*base.Instance)
-	UpdateHealthStatus(id base.InstanceID, res HealthCheckResult)
+	Insert(*proto.Instance)
+	UpdateHealthStatus(id proto.InstanceID, res HealthCheckResult)
 }
 
 // TODO: runner
 
 type mockInstancesDB struct {
-	instancesByID map[base.InstanceID]*base.Instance
-	instancesList []*base.Instance
+	instancesByID map[proto.InstanceID]*proto.Instance
+	instancesList []*proto.Instance
 }
 
 var _ InstanceStateDB = &mockInstancesDB{}
 
 func NewEmptyMockInstancesDB() *mockInstancesDB {
 	return &mockInstancesDB{
-		instancesByID: map[base.InstanceID]*base.Instance{},
+		instancesByID: map[proto.InstanceID]*proto.Instance{},
 	}
 }
 
-func (m *mockInstancesDB) Insert(i *base.Instance) {
+func (m *mockInstancesDB) Insert(i *proto.Instance) {
 	m.instancesByID[i.ID] = i
 	m.instancesList = append(m.instancesList, i)
 }
 
-func (m *mockInstancesDB) List() []*base.Instance {
+func (m *mockInstancesDB) List() []*proto.Instance {
 	return m.instancesList
 }
 
-func (m *mockInstancesDB) ListHealthy() []*base.Instance {
-	var out []*base.Instance
+func (m *mockInstancesDB) ListHealthy() []*proto.Instance {
+	var out []*proto.Instance
 	for _, i := range m.instancesList {
 		out = append(out, i)
 	}
 	return out
 }
 
-func (m *mockInstancesDB) UpdateHealthStatus(id base.InstanceID, res HealthCheckResult) {
+func (m *mockInstancesDB) UpdateHealthStatus(id proto.InstanceID, res HealthCheckResult) {
 	switch res.(type) {
 	case HealthOk:
-		m.instancesByID[id].State = base.StateRunning
+		m.instancesByID[id].State = proto.StateRunning
 	case HealthErr:
-		m.instancesByID[id].State = base.StateUnhealthy
+		m.instancesByID[id].State = proto.StateUnhealthy
 	}
 }

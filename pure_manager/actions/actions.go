@@ -3,7 +3,7 @@ package actions
 import (
 	"fmt"
 
-	"github.com/cockroachlabs/instance_manager/pure_manager/base"
+	"github.com/cockroachlabs/instance_manager/pure_manager/proto"
 )
 
 // action tree
@@ -27,22 +27,22 @@ func (DoNothing) Action()        {}
 func (DoNothing) String() string { return "DoNothing" }
 
 type StartInstance struct {
-	Spec base.InstanceSpec
+	Spec proto.InstanceSpec
 }
 
 func (StartInstance) Action()          {}
 func (s StartInstance) String() string { return fmt.Sprintf("StartInstance(%v)", s.Spec) }
 
 type ShutDownInstance struct {
-	ID base.InstanceID
+	ID proto.InstanceID
 }
 
 func (ShutDownInstance) Action()          {}
 func (s ShutDownInstance) String() string { return fmt.Sprintf("ShutDownInstance(%v)", s.ID) }
 
 type RestartInstance struct {
-	ID         base.InstanceID
-	NewVersion base.Version
+	ID         proto.InstanceID
+	NewVersion proto.Version
 }
 
 func (RestartInstance) Action()          {}

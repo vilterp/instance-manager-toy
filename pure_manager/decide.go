@@ -3,7 +3,7 @@ package pure_manager
 import (
 	"fmt"
 
-	"github.com/cockroachlabs/instance_manager/pure_manager/base"
+	"github.com/cockroachlabs/instance_manager/pure_manager/proto"
 )
 
 type StateDB struct {
@@ -23,7 +23,7 @@ type CommandInput struct {
 func (ci CommandInput) Input() {}
 
 type HealthcheckInput struct {
-	ID                base.InstanceID
+	ID                proto.InstanceID
 	HealthcheckResult HealthCheckResult
 }
 

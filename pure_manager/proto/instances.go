@@ -1,4 +1,4 @@
-package base
+package proto
 
 import "github.com/google/uuid"
 
