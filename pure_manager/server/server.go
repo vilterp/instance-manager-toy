@@ -20,7 +20,7 @@ func NewServer() *Server {
 	db := db.NewStateDB()
 	return &Server{
 		db:           db,
-		actionRunner: actions.NewMockRunner(&db.Nodes),
+		actionRunner: actions.NewMockRunner(db.Nodes),
 	}
 }
 
@@ -60,8 +60,27 @@ func (s *Server) ListNodes(context.Context, *proto.ListNodesRequest) (*proto.Lis
 	panic("implement me")
 }
 
-func (s *Server) StreamNodes(*proto.StreamNodesRequest, proto.GroupManager_StreamNodesServer) error {
-	panic("implement me")
+func (s *Server) StreamNodes(req *proto.StreamNodesRequest, srv proto.GroupManager_StreamNodesServer) error {
+	if req.IncludeInitial {
+		if err := srv.Send(&proto.NodeEvent{
+			Event: &proto.NodeEvent_InitialList_{
+				InitialList: &proto.NodeEvent_InitialList{
+					Nodes: s.db.Nodes.List(),
+				},
+			},
+		}); err != nil {
+			return err
+		}
+	}
+	subID, c := s.db.Nodes.Stream()
+	defer s.db.Nodes.Unsubscribe(subID)
+
+	for evt := range c {
+		if err := srv.Send(evt); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (s *Server) ListTaskGraphs(context.Context, *proto.ListTaskGraphsRequest) (*proto.ListTaskGraphsResponse, error) {
@@ -95,7 +114,10 @@ func (s *Server) StreamTasks(req *proto.StreamTasksRequest, srv proto.GroupManag
 			return err
 		}
 	}
-	for evt := range st.Stream() {
+	subID, c := st.Stream()
+	defer st.Unsubscribe(subID)
+
+	for evt := range c {
 		if err := srv.Send(evt); err != nil {
 			return err
 		}

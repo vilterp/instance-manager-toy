@@ -12,7 +12,8 @@ type TasksDB interface {
 	AddDep(doFirst proto.TaskID, thenDo proto.TaskID)
 	GetUnblockedTasks() []*proto.Task
 	List() []*proto.Task
-	Stream() chan *proto.TaskEvent
+	Stream() (SubID, chan *proto.TaskEvent)
+	Unsubscribe(id SubID)
 
 	MarkStarted(id proto.TaskID)
 	MarkSucceeded(id proto.TaskID)
@@ -29,8 +30,8 @@ type MockGraphDB struct {
 
 	waitingTasks map[proto.TaskID]struct{}
 
-	eventSubs map[int]chan *proto.TaskEvent
-	nextSubID int
+	eventSubs map[SubID]chan *proto.TaskEvent
+	nextSubID SubID
 }
 
 func (g *MockGraphDB) Print() {
@@ -51,7 +52,7 @@ func NewMockTasksDB(s *proto.TaskGraphSpec) *MockGraphDB {
 		downstream:   map[proto.TaskID][]proto.TaskID{},
 		upstream:     map[proto.TaskID][]proto.TaskID{},
 		waitingTasks: map[proto.TaskID]struct{}{},
-		eventSubs:    map[int]chan *proto.TaskEvent{},
+		eventSubs:    map[SubID]chan *proto.TaskEvent{},
 	}
 	for tID, taskSpec := range s.Tasks {
 		g.Insert(proto.TaskID(tID), taskSpec.Action)
@@ -169,14 +170,18 @@ func (g *MockGraphDB) publish(evt *proto.TaskEvent) {
 			c <- evt
 		}
 	}
-	// TODO: close the conns when the last task succeeds
 }
 
-func (g *MockGraphDB) Stream() chan *proto.TaskEvent {
+func (g *MockGraphDB) Stream() (SubID, chan *proto.TaskEvent) {
 	c := make(chan *proto.TaskEvent)
+	subID := g.nextSubID
 	g.eventSubs[g.nextSubID] = c
 	g.nextSubID++
-	return c
+	return subID, c
+}
+
+func (g *MockGraphDB) Unsubscribe(id SubID) {
+	delete(g.eventSubs, id)
 }
 
 // TODO: getDot

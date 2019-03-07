@@ -39,10 +39,31 @@ func main() {
 	}
 	fmt.Println("\tgraph", resp2.Graph)
 
+	//streamTasks(client, ctx, resp2.Graph.Id)
+	streamNodes(client, ctx)
+}
+
+func streamNodes(client proto.GroupManagerClient, ctx context.Context) {
+	fmt.Println("stream nodes:")
+	resp, err := client.StreamNodes(ctx, &proto.StreamNodesRequest{
+		IncludeInitial: true,
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+	for {
+		evt, err := resp.Recv()
+		if err != nil {
+			log.Fatal(err)
+		}
+		log.Println("\tnode evt:", evt)
+	}
+}
+
+func streamTasks(client proto.GroupManagerClient, ctx context.Context, graphID string) {
 	fmt.Println("stream tasks:")
-	// TODO: get initial to avoid race condition
 	resp3, err3 := client.StreamTasks(ctx, &proto.StreamTasksRequest{
-		GraphId:        resp2.Graph.Id,
+		GraphId:        graphID,
 		IncludeInitial: true,
 	})
 	if err3 != nil {
@@ -54,6 +75,6 @@ func main() {
 		if err != nil {
 			log.Fatalf("%#v", err)
 		}
-		fmt.Println("\tevt:", evt)
+		fmt.Println("\tstream evt:", evt)
 	}
 }

@@ -15,6 +15,7 @@ message Node {
   string id = 1;
   int64 version = 2;
   NodeState state = 3;
+  // TODO: created_at
 }
 
 message NodeSpec {
@@ -61,7 +62,7 @@ message ListNodesResponse {
 }
 
 message StreamNodesRequest {
-
+  bool include_initial = 1;
 }
 
 message NodeEvent {
@@ -79,8 +80,9 @@ message NodeEvent {
   }
 
   oneof event {
-    Started started = 1;
-    StateChanged state_changed = 2;
+    InitialList initial_list = 1;
+    Started started = 2;
+    StateChanged state_changed = 3;
   }
 }
 
