@@ -79,15 +79,21 @@ func (s *Server) GetTasks(context.Context, *proto.GetTasksRequest) (*proto.GetTa
 func (s *Server) StreamTasks(req *proto.StreamTasksRequest, srv proto.GroupManager_StreamTasksServer) error {
 	st := s.db.taskGraphs.GetState(TaskGraphID(req.GraphId))
 	if req.IncludeInitial {
-		//if err := srv.Send(&proto.TaskEvent{
-		//	Event: &proto.TaskEvent_Initial{
-		//		Initial: &proto.TaskEvent_InitialState{
-		//			Tasks: st.List(),
-		//		},
-		//	},
-		//}); err != nil {
-		//	return err
-		//}
+		for _, t := range st.List() {
+			var b []byte
+			if _, err := t.XXX_Marshal(b, true); err != nil {
+				panic(err)
+			}
+		}
+		if err := srv.Send(&proto.TaskEvent{
+			Event: &proto.TaskEvent_Initial{
+				Initial: &proto.TaskEvent_InitialState{
+					Tasks: st.List(),
+				},
+			},
+		}); err != nil {
+			return err
+		}
 	}
 	for evt := range st.Stream() {
 		log.Println("evt:", evt, "srv:", srv)

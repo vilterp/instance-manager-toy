@@ -120,7 +120,6 @@ message TaskSpec {
 }
 
 message DoNothing {
-  string description = 1;
 }
 
 message Action {

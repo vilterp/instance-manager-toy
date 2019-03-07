@@ -51,7 +51,6 @@ func NewMockGraphDB(s *proto.TaskGraphSpec) *MockGraphDB {
 func (g *MockGraphDB) List() []*proto.Task {
 	var out []*proto.Task
 	for _, t := range g.tasks {
-		log.Println("listing action:", t)
 		out = append(out, t)
 	}
 	return out

@@ -32,6 +32,7 @@ func main() {
 	resp2, err2 := client.UpdateSpec(ctx, &proto.UpdateSpecRequest{
 		Spec: &proto.GroupSpec{
 			NumInstances: 3,
+			Version:      1,
 		},
 	})
 	if err2 != nil {

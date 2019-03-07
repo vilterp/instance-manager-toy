@@ -37,7 +37,9 @@ func (b *SpecBuilder) ParIDs(list []proto.TaskID) proto.TaskID {
 	}
 	b.spec.Tasks[string(id)] = &proto.TaskSpec{
 		Action: &proto.Action{
-			Action: &proto.Action_DoNothing{},
+			Action: &proto.Action_DoNothing{
+				DoNothing: &proto.DoNothing{},
+			},
 		},
 		PrereqTaskIds: ids,
 	}
