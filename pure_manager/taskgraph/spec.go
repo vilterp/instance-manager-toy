@@ -1,65 +1,61 @@
 package taskgraph
 
 import (
-	"github.com/cockroachlabs/instance_manager/pure_manager/actions"
+	"github.com/cockroachlabs/instance_manager/pure_manager/proto"
 	"github.com/google/uuid"
 )
 
-type Spec struct {
-	Tasks map[TaskID]*TaskSpec
+type SpecBuilder struct {
+	spec *proto.TaskGraphSpec
 }
 
-type TaskSpec struct {
-	Action   actions.Action
-	Upstream []TaskID
-}
-
-func NewSpec() *Spec {
-	return &Spec{
-		Tasks: map[TaskID]*TaskSpec{},
+func NewSpecBuilder() *SpecBuilder {
+	return &SpecBuilder{
+		spec: &proto.TaskGraphSpec{
+			Tasks: map[string]*proto.TaskSpec{},
+		},
 	}
 }
 
-func (s *Spec) ParIDs(list []TaskID) TaskID {
-	id := TaskID(uuid.New())
-	s.Tasks[id] = &TaskSpec{
-		Action:   actions.DoNothing{},
-		Upstream: list,
+func (b *SpecBuilder) Build() *proto.TaskGraphSpec {
+	return b.spec
+}
+
+func (b *SpecBuilder) Unit(a *proto.Action) proto.TaskID {
+	id := proto.TaskID(uuid.New().String())
+	b.spec.Tasks[string(id)] = &proto.TaskSpec{
+		Action: a,
 	}
 	return id
 }
 
-func (s *Spec) Par(list []actions.Action) TaskID {
-	var ids []TaskID
-	for _, action := range list {
-		id := TaskID(uuid.New())
-		ts := &TaskSpec{
-			Action: action,
-		}
-		s.Tasks[id] = ts
-		ids = append(ids, id)
+func (b *SpecBuilder) ParIDs(list []proto.TaskID) proto.TaskID {
+	id := proto.TaskID(uuid.New().String())
+	var ids []string
+	for _, tid := range list {
+		ids = append(ids, string(tid))
 	}
-	downstreamID := TaskID(uuid.New())
-	downstream := &TaskSpec{
-		Action:   actions.DoNothing{},
-		Upstream: ids,
+	b.spec.Tasks[string(id)] = &proto.TaskSpec{
+		Action: &proto.Action{
+			Action: &proto.Action_DoNothing{},
+		},
+		PrereqTaskIds: ids,
 	}
-	s.Tasks[downstreamID] = downstream
-	return downstreamID
+	return id
 }
 
-func (s *Spec) Ser(actions []actions.Action) TaskID {
-	mostDownstream := TaskID(uuid.Nil)
-	for _, action := range actions {
-		id := TaskID(uuid.New())
-		spec := &TaskSpec{
-			Action: action,
+func (b *SpecBuilder) SerIDs(list []proto.TaskID) proto.TaskID {
+	mostDownstream := proto.TaskID("")
+	for _, t := range list {
+		if mostDownstream != proto.TaskID("") {
+			b.AddDep(mostDownstream, t)
 		}
-		if mostDownstream != TaskID(uuid.Nil) {
-			spec.Upstream = []TaskID{mostDownstream}
-		}
-		mostDownstream = id
-		s.Tasks[id] = spec
+		mostDownstream = t
 	}
 	return mostDownstream
+}
+
+func (b *SpecBuilder) AddDep(doFirst proto.TaskID, thenDo proto.TaskID) {
+	downstream := b.spec.Tasks[string(thenDo)]
+	downstream.PrereqTaskIds = append(downstream.PrereqTaskIds, string(doFirst))
 }

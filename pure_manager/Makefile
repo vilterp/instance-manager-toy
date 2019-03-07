@@ -6,11 +6,11 @@ proto/api.pb.go: proto/api.proto
 
 .PHONY: bin/client
 bin/client: proto/api.pb.go
-	go build -o bin/client ./client
+	go build -o bin/client ./cmd/client
 
 .PHONY: bin/server
 bin/server: proto/api.pb.go
-	go build -o bin/server ./server
+	go build -o bin/server ./cmd/server
 
 .PHONY: serve
 serve: bin/server

@@ -1,15 +1,16 @@
 package taskgraph
 
 import (
-	"fmt"
+	"log"
 
 	"github.com/cockroachlabs/instance_manager/pure_manager/actions"
+	"github.com/cockroachlabs/instance_manager/pure_manager/proto"
 )
 
 type GraphRunner struct {
 	db           StateDB
 	actionRunner actions.Runner
-	events       chan TaskEvent
+	events       chan *proto.TaskEvent
 
 	running int
 	toDo    int
@@ -17,7 +18,7 @@ type GraphRunner struct {
 
 func NewGraphRunner(db StateDB, runner actions.Runner) *GraphRunner {
 	return &GraphRunner{
-		events:       make(chan TaskEvent),
+		events:       make(chan *proto.TaskEvent),
 		actionRunner: runner,
 		db:           db,
 		toDo:         len(db.List()),
@@ -27,16 +28,18 @@ func NewGraphRunner(db StateDB, runner actions.Runner) *GraphRunner {
 func (g *GraphRunner) Run() {
 	g.runNext()
 	for g.toDo > 0 {
-		fmt.Println("todo", g.toDo, "running", g.running)
+		log.Println("todo", g.toDo, "running", g.running)
 		g.runNext()
 		evt := <-g.events
-		switch tEvt := evt.(type) {
-		case *TaskSucceeeded:
-			g.db.MarkSucceeded(tEvt.ID)
+		switch tEvt := evt.Event.(type) {
+		case *proto.TaskEvent_Succeeded_:
+			succ := tEvt.Succeeded
+			g.db.MarkSucceeded(proto.TaskID(succ.Id))
 			g.toDo--
 			g.running--
-		case *TaskFailed:
-			g.db.MarkFailed(tEvt.ID, tEvt.Err)
+		case *proto.TaskEvent_Failed_:
+			fail := tEvt.Failed
+			g.db.MarkFailed(proto.TaskID(fail.Id), fail.Error)
 			g.toDo--
 			g.running--
 		}
@@ -50,49 +53,31 @@ func (g *GraphRunner) runNext() {
 	}
 	for _, t := range unblocked {
 		// Go gotcha: bind vars here or they won't work in the closure
-		tID := t.ID
+		tID := proto.TaskID(t.Id)
 		tAction := t.Action
 		g.db.MarkStarted(tID)
 		g.running++
 		go func() {
 			err := g.actionRunner.Run(tAction)
 			if err != nil {
-				g.events <- &TaskFailed{
-					Err: err,
-					ID:  tID,
+				// Jesus, these are ridiculously verbose
+				g.events <- &proto.TaskEvent{
+					Event: &proto.TaskEvent_Failed_{
+						Failed: &proto.TaskEvent_Failed{
+							Error: err.Error(),
+							Id:    string(tID),
+						},
+					},
 				}
 			} else {
-				g.events <- &TaskSucceeeded{tID}
+				g.events <- &proto.TaskEvent{
+					Event: &proto.TaskEvent_Succeeded_{
+						Succeeded: &proto.TaskEvent_Succeeded{
+							Id: string(tID),
+						},
+					},
+				}
 			}
 		}()
 	}
-}
-
-type TaskEvent interface {
-	TaskID() TaskID
-}
-
-type TaskStarted struct {
-	ID TaskID
-}
-
-func (ts *TaskStarted) TaskID() TaskID {
-	return ts.ID
-}
-
-type TaskSucceeeded struct {
-	ID TaskID
-}
-
-func (ts *TaskSucceeeded) TaskID() TaskID {
-	return ts.ID
-}
-
-type TaskFailed struct {
-	ID  TaskID
-	Err error
-}
-
-func (tf *TaskFailed) TaskID() TaskID {
-	return tf.ID
 }

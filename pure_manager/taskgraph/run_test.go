@@ -9,7 +9,7 @@ import (
 )
 
 func Test_Par(t *testing.T) {
-	s := NewSpec()
+	s := NewSpecBuilder()
 	s.Par([]actions.Action{
 		actions.StartInstance{Spec: proto.InstanceSpec{Version: 1}},
 		actions.StartInstance{Spec: proto.InstanceSpec{Version: 2}},
@@ -32,7 +32,7 @@ func Test_Par(t *testing.T) {
 }
 
 func Test_Ser(t *testing.T) {
-	s := NewSpec()
+	s := NewSpecBuilder()
 	s.Ser([]actions.Action{
 		actions.StartInstance{Spec: proto.InstanceSpec{Version: 1}},
 		actions.StartInstance{Spec: proto.InstanceSpec{Version: 2}},
@@ -51,7 +51,7 @@ func Test_Ser(t *testing.T) {
 }
 
 func Test_Both(t *testing.T) {
-	s := NewSpec()
+	s := NewSpecBuilder()
 	t1 := s.Ser([]actions.Action{
 		actions.StartInstance{Spec: proto.InstanceSpec{Version: 1}},
 		actions.StartInstance{Spec: proto.InstanceSpec{Version: 2}},

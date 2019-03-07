@@ -1,49 +1,20 @@
 package taskgraph
 
 import (
-	"time"
-
-	"github.com/cockroachlabs/instance_manager/pure_manager/actions"
-	"github.com/google/uuid"
+	"github.com/cockroachlabs/instance_manager/pure_manager/proto"
 )
-
-type TaskID uuid.UUID
-
-func (t TaskID) String() string {
-	return uuid.UUID(t).String()
-}
 
 // Supposed to be threadsafe
 type StateDB interface {
-	Insert(id TaskID, a actions.Action) TaskID
-	AddDep(doFirst TaskID, thenDo TaskID)
-	GetUnblockedTasks() []*Task
-	List() []*Task
+	Insert(id proto.TaskID, a *proto.Action) proto.TaskID
+	AddDep(doFirst proto.TaskID, thenDo proto.TaskID)
+	GetUnblockedTasks() []*proto.Task
+	List() []*proto.Task
+	Stream() chan *proto.TaskEvent
 
-	MarkStarted(id TaskID)
-	MarkSucceeded(id TaskID)
-	MarkFailed(id TaskID, err error)
+	MarkStarted(id proto.TaskID)
+	MarkSucceeded(id proto.TaskID)
+	MarkFailed(id proto.TaskID, err string)
 
 	// TODO: tail?
-}
-
-type TaskStatus string
-
-const (
-	StatusWaiting   TaskStatus = "WAITING"
-	StatusRunning              = "RUNNING"
-	StatusSucceeded            = "DONE"
-	StatusFailed               = "FAILED"
-)
-
-type Task struct {
-	ID         TaskID
-	Action     actions.Action
-	Status     TaskStatus
-	StartedAt  time.Time
-	FinishedAt time.Time
-	// set if it failed
-	Err error
-
-	// uhh, this may need to be an interface eventually
 }

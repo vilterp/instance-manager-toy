@@ -1,6 +1,7 @@
 syntax = "proto3";
 
 import "google/protobuf/timestamp.proto";
+option go_package = "proto";
 
 enum NodeState {
   NodeStarting = 0;
@@ -30,7 +31,7 @@ message UpdateSpecRequest {
 }
 
 message UpdateSpecResponse {
-  TaskGraph graph = 1;
+  string graph_id = 1;
 }
 
 message GetCurrentSpecRequest {}
@@ -91,24 +92,26 @@ message ListTaskGraphsResponse {
 }
 
 enum TaskGraphState {
-  TaskGraphRunning = 0;
+  TaskGraphWaiting = 0;
+  TaskGraphRunning = 1;
   // Encountered an error, but some tasks still running.
-  TaskGraphRunningErrored = 1;
-  TaskGraphFailed = 2;
-  TaskGraphSucceeded = 3;
+  TaskGraphRunningErrored = 2;
+  TaskGraphFailed = 3;
+  TaskGraphSucceeded = 4;
 }
 
 message TaskGraph {
   string id = 1;
-  google.protobuf.Timestamp started_at = 2;
-  google.protobuf.Timestamp finished_at = 3;
-  TaskGraphState state = 4;
-  TaskGraphSpec spec = 5;
-  repeated Task tasks = 6;
+  google.protobuf.Timestamp created_at = 2;
+  google.protobuf.Timestamp started_at = 3;
+  google.protobuf.Timestamp finished_at = 4;
+  TaskGraphState state = 5;
+  TaskGraphSpec spec = 6;
+  repeated Task tasks = 7;
 }
 
 message TaskGraphSpec {
-  repeated TaskSpec tasks = 1;
+  map<string, TaskSpec> tasks = 1;
 }
 
 message TaskSpec {
@@ -116,10 +119,15 @@ message TaskSpec {
   repeated string prereq_task_ids = 2;
 }
 
+message DoNothing {
+  string description = 1;
+}
+
 message Action {
   oneof action {
-    StartNode start_node = 1;
-    ShutDownNode shut_down_node = 2;
+    DoNothing do_nothing = 1;
+    StartNode start_node = 2;
+    ShutDownNode shut_down_node = 3;
   }
 }
 
@@ -132,9 +140,10 @@ message ShutDownNode {
 }
 
 enum TaskState {
-  TaskRunning = 0;
-  TaskFailed = 1;
-  TaskSucceeded = 2;
+  TaskWaiting = 0;
+  TaskRunning = 1;
+  TaskFailed = 2;
+  TaskSucceeded = 3;
 }
 
 message StreamTaskGraphsRequest {
@@ -217,9 +226,24 @@ message TaskEvent {
   }
 }
 
+message KillNodeRequest {
+  string id = 1;
+}
+
+message KillNodeResponse {
+}
+
+message Input {
+  oneof input {
+    UpdateSpecRequest update_spec = 1;
+    KillNodeRequest kill_node = 2;
+  }
+}
+
 service GroupManager {
   // Specs
   rpc UpdateSpec(UpdateSpecRequest) returns (UpdateSpecResponse);
+  rpc KillNode(KillNodeRequest) returns (KillNodeResponse);
   rpc GetCurrentSpec(GetCurrentSpecRequest) returns (GetCurrentSpecResponse);
   rpc ListSpecs(ListSpecsRequest) returns (ListSpecsResponse);
 
