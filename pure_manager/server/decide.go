@@ -13,7 +13,7 @@ func Decide(st *db.StateDB, input *proto.Input) *proto.TaskGraphSpec {
 		update := tInput.UpdateSpec
 		st.GroupSpec.UpdateSpec(update.Spec)
 		b := newBuilder()
-		return b.WipeAndRestart(st.Nodes.List(), st.GroupSpec.GetCurrent().Spec)
+		return b.WipeAndRestart(st.Nodes.ListHealthy(), st.GroupSpec.GetCurrent().Spec)
 	case *proto.Input_KillNode:
 		panic("implement me")
 	}

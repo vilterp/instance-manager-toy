@@ -37,7 +37,7 @@ func (b *builder) Wipe(nodes []*proto.Node) proto.TaskID {
 			},
 		}))
 	}
-	return b.b.ParIDs(out)
+	return b.b.ParIDs("Wipe", out)
 }
 
 func (b *builder) StartFromScratch(spec *proto.GroupSpec) proto.TaskID {
@@ -53,7 +53,7 @@ func (b *builder) StartFromScratch(spec *proto.GroupSpec) proto.TaskID {
 			},
 		}))
 	}
-	return b.b.ParIDs(out)
+	return b.b.ParIDs("StartFromScratch", out)
 }
 
 //func RollingRestart(nodes []*Instance, newVersion Version) ActionNode {

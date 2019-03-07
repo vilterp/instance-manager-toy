@@ -1,6 +1,10 @@
 package db
 
-import "github.com/cockroachlabs/instance_manager/pure_manager/proto"
+import (
+	"log"
+
+	"github.com/cockroachlabs/instance_manager/pure_manager/proto"
+)
 
 type SubID int
 
@@ -41,6 +45,7 @@ func (m *mockNodesDB) Stream() (SubID, chan *proto.NodeEvent) {
 }
 
 func (m *mockNodesDB) Unsubscribe(id SubID) {
+	log.Println("unsub", id)
 	delete(m.subs, id)
 }
 
@@ -77,12 +82,15 @@ func (m *mockNodesDB) List() []*proto.Node {
 func (m *mockNodesDB) ListHealthy() []*proto.Node {
 	var out []*proto.Node
 	for _, i := range m.instancesList {
-		out = append(out, i)
+		if i.State == proto.NodeState_NodeRunning {
+			out = append(out, i)
+		}
 	}
 	return out
 }
 
 func (m *mockNodesDB) publish(evt *proto.NodeEvent) {
+	log.Println("publish", evt, m.subs)
 	for _, c := range m.subs {
 		c <- evt
 	}

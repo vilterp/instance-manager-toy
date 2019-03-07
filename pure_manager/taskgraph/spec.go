@@ -1,12 +1,14 @@
 package taskgraph
 
 import (
+	"fmt"
+
 	"github.com/cockroachlabs/instance_manager/pure_manager/proto"
-	"github.com/google/uuid"
 )
 
 type SpecBuilder struct {
-	spec *proto.TaskGraphSpec
+	spec   *proto.TaskGraphSpec
+	nextID int
 }
 
 func NewSpecBuilder() *SpecBuilder {
@@ -17,20 +19,26 @@ func NewSpecBuilder() *SpecBuilder {
 	}
 }
 
+func (b *SpecBuilder) getNextID() proto.TaskID {
+	id := b.nextID
+	b.nextID++
+	return proto.TaskID(fmt.Sprintf("%d", id))
+}
+
 func (b *SpecBuilder) Build() *proto.TaskGraphSpec {
 	return b.spec
 }
 
 func (b *SpecBuilder) Unit(a *proto.Action) proto.TaskID {
-	id := proto.TaskID(uuid.New().String())
+	id := b.getNextID()
 	b.spec.Tasks[string(id)] = &proto.TaskSpec{
 		Action: a,
 	}
 	return id
 }
 
-func (b *SpecBuilder) ParIDs(list []proto.TaskID) proto.TaskID {
-	id := proto.TaskID(uuid.New().String())
+func (b *SpecBuilder) ParIDs(desc string, list []proto.TaskID) proto.TaskID {
+	id := b.getNextID()
 	var ids []string
 	for _, tid := range list {
 		ids = append(ids, string(tid))
@@ -38,7 +46,9 @@ func (b *SpecBuilder) ParIDs(list []proto.TaskID) proto.TaskID {
 	b.spec.Tasks[string(id)] = &proto.TaskSpec{
 		Action: &proto.Action{
 			Action: &proto.Action_DoNothing{
-				DoNothing: &proto.DoNothing{},
+				DoNothing: &proto.DoNothing{
+					Description: desc,
+				},
 			},
 		},
 		PrereqTaskIds: ids,

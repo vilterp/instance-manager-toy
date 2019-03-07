@@ -37,10 +37,11 @@ func main() {
 	if err2 != nil {
 		log.Fatal(err2)
 	}
-	fmt.Println("\tgraph", resp2.Graph)
+	fmt.Println("task graph spec:")
+	resp2.Graph.Spec.Print()
 
-	go streamTasks(client, ctx, resp2.Graph.Id)
-	streamNodes(client, ctx)
+	//go streamTasks(client, ctx, resp2.Graph.Id)
+	streamNodes(client, ctx) /**/
 }
 
 func streamNodes(client proto.GroupManagerClient, ctx context.Context) {
