@@ -39,7 +39,7 @@ func main() {
 	}
 	fmt.Println("\tgraph", resp2.Graph)
 
-	//streamTasks(client, ctx, resp2.Graph.Id)
+	go streamTasks(client, ctx, resp2.Graph.Id)
 	streamNodes(client, ctx)
 }
 
@@ -56,7 +56,7 @@ func streamNodes(client proto.GroupManagerClient, ctx context.Context) {
 		if err != nil {
 			log.Fatal(err)
 		}
-		log.Println("\tnode evt:", evt)
+		fmt.Println("\tnode evt:", evt)
 	}
 }
 
@@ -75,6 +75,6 @@ func streamTasks(client proto.GroupManagerClient, ctx context.Context, graphID s
 		if err != nil {
 			log.Fatalf("%#v", err)
 		}
-		fmt.Println("\tstream evt:", evt)
+		fmt.Println("\ttask evt:", evt)
 	}
 }
