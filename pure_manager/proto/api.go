@@ -3,6 +3,7 @@ package proto
 import (
 	"fmt"
 	"sort"
+	"strconv"
 )
 
 type Version int64
@@ -25,7 +26,15 @@ func (g *TaskGraphSpec) OrderedTaskSpecs() []idAndTS {
 		})
 	}
 	sort.Slice(specs, func(i, j int) bool {
-		return specs[i].id < specs[j].id
+		it, err1 := strconv.Atoi(specs[i].id)
+		jt, err2 := strconv.Atoi(specs[j].id)
+		if err1 != nil {
+			return false
+		}
+		if err2 != nil {
+			return false
+		}
+		return it < jt
 	})
 	return specs
 }
