@@ -38,13 +38,7 @@ func (b *builder) KillSome(nodes []*proto.Node, n int64) (proto.TaskID, error) {
 	var out []proto.TaskID
 	for i := int64(0); i < n; i++ {
 		node := nodes[i]
-		out = append(out, b.b.Unit(&proto.Action{
-			Action: &proto.Action_ShutDownNode{
-				ShutDownNode: &proto.ShutDownNode{
-					NodeId: node.Id,
-				},
-			},
-		}))
+		out = append(out, b.b.Unit(proto.MkShutDown(proto.NodeID(node.Id))))
 	}
 	return b.b.ParIDs("KillSome", out), nil
 }
@@ -52,13 +46,7 @@ func (b *builder) KillSome(nodes []*proto.Node, n int64) (proto.TaskID, error) {
 func (b *builder) Wipe(nodes []*proto.Node) proto.TaskID {
 	var out []proto.TaskID
 	for _, i := range nodes {
-		out = append(out, b.b.Unit(&proto.Action{
-			Action: &proto.Action_ShutDownNode{
-				ShutDownNode: &proto.ShutDownNode{
-					NodeId: i.Id,
-				},
-			},
-		}))
+		out = append(out, b.b.Unit(proto.MkShutDown(proto.NodeID(i.Id))))
 	}
 	return b.b.ParIDs("Wipe", out)
 }
@@ -70,36 +58,19 @@ func (b *builder) StartFromScratch(spec *proto.GroupSpec) proto.TaskID {
 func (b *builder) StartNodes(n int64, v int64) proto.TaskID {
 	var out []proto.TaskID
 	for i := int64(0); i < n; i++ {
-		out = append(out, b.b.Unit(&proto.Action{
-			Action: &proto.Action_StartNode{
-				StartNode: &proto.StartNode{
-					Spec: &proto.NodeSpec{
-						Version: int64(v),
-					},
-				},
-			},
-		}))
+		out = append(out, b.b.Unit(proto.MkStartNode(&proto.NodeSpec{
+			Version: int64(v),
+		})))
 	}
 	return b.b.ParIDs("StartFromScratch", out)
 }
 
+// TODO: max surge, max unavailable, etc
 func (b *builder) RollingUpgrade(nodes []*proto.Node, newSpec *proto.NodeSpec) proto.TaskID {
 	var out []taskgraph.TaskChain
 	for _, node := range nodes {
-		shutDown := b.b.Unit(&proto.Action{
-			Action: &proto.Action_ShutDownNode{
-				ShutDownNode: &proto.ShutDownNode{
-					NodeId: node.Id,
-				},
-			},
-		})
-		start := b.b.Unit(&proto.Action{
-			Action: &proto.Action_StartNode{
-				StartNode: &proto.StartNode{
-					Spec: newSpec,
-				},
-			},
-		})
+		shutDown := b.b.Unit(proto.MkShutDown(proto.NodeID(node.Id)))
+		start := b.b.Unit(proto.MkStartNode(newSpec))
 		restart := b.b.SerIDs("Restart", []proto.TaskID{shutDown, start})
 		out = append(out, restart)
 	}

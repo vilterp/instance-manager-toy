@@ -45,3 +45,23 @@ func (g *TaskGraphSpec) Print() {
 		fmt.Printf("%s\t%v\t%+v\n", ts.id, ts.spec.PrereqTaskIds, ts.spec.Action)
 	}
 }
+
+func MkStartNode(spec *NodeSpec) *Action {
+	return &Action{
+		Action: &Action_StartNode{
+			StartNode: &StartNode{
+				Spec: spec,
+			},
+		},
+	}
+}
+
+func MkShutDown(id NodeID) *Action {
+	return &Action{
+		Action: &Action_ShutDownNode{
+			ShutDownNode: &ShutDownNode{
+				NodeId: string(id),
+			},
+		},
+	}
+}
