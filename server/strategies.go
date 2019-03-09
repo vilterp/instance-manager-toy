@@ -62,7 +62,7 @@ func (b *builder) StartNodes(n int64, v int64) proto.TaskID {
 			Version: int64(v),
 		})))
 	}
-	return b.b.ParIDs("StartFromScratch", out)
+	return b.b.ParIDs("StartNodes", out)
 }
 
 // TODO: max surge, max unavailable, etc

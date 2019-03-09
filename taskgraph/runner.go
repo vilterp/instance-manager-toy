@@ -8,7 +8,7 @@ import (
 	"github.com/cockroachlabs/instance_manager/proto"
 )
 
-type GraphRunner struct {
+type Runner struct {
 	db           db.TasksDB
 	actionRunner actions.Runner
 	events       chan *proto.TaskEvent
@@ -17,8 +17,8 @@ type GraphRunner struct {
 	toDo    int
 }
 
-func NewGraphRunner(db db.TasksDB, runner actions.Runner) *GraphRunner {
-	return &GraphRunner{
+func NewRunner(db db.TasksDB, runner actions.Runner) *Runner {
+	return &Runner{
 		events:       make(chan *proto.TaskEvent),
 		actionRunner: runner,
 		db:           db,
@@ -26,7 +26,7 @@ func NewGraphRunner(db db.TasksDB, runner actions.Runner) *GraphRunner {
 	}
 }
 
-func (g *GraphRunner) Run() {
+func (g *Runner) Run() {
 	g.runNext()
 	for g.toDo > 0 {
 		log.Println("todo", g.toDo, "running", g.running)
@@ -48,7 +48,7 @@ func (g *GraphRunner) Run() {
 	log.Println("finished graph")
 }
 
-func (g *GraphRunner) runNext() {
+func (g *Runner) runNext() {
 	unblocked := g.db.GetUnblockedTasks()
 	if len(unblocked) == 0 && g.running == 0 {
 		panic("no unblocked tasks and nothing running")

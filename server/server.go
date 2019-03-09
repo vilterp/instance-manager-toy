@@ -39,7 +39,7 @@ func (s *Server) UpdateSpec(ctx context.Context, req *proto.UpdateSpecRequest) (
 	graphSpec.Print()
 	graph := s.db.TaskGraphs.Insert(graphSpec)
 	graphState := s.db.TaskGraphs.GetState(db.TaskGraphID(graph.Id))
-	runner := taskgraph.NewGraphRunner(graphState, s.actionRunner)
+	runner := taskgraph.NewRunner(graphState, s.actionRunner)
 	go func() {
 		runner.Run()
 		graphState.MarkGraphDone()

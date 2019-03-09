@@ -17,7 +17,7 @@ func Test_Par(t *testing.T) {
 	})
 	db := NewMockGraphDB(s)
 	actionRunner := actions.NewMockRunner()
-	graphRunner := NewGraphRunner(db, actionRunner)
+	graphRunner := NewRunner(db, actionRunner)
 	graphRunner.Run()
 	log := actionRunner.Log
 	if len(log) != 4 {
@@ -40,7 +40,7 @@ func Test_Ser(t *testing.T) {
 	})
 	db := NewMockGraphDB(s)
 	actionRunner := actions.NewMockRunner()
-	graphRunner := NewGraphRunner(db, actionRunner)
+	graphRunner := NewRunner(db, actionRunner)
 	graphRunner.Run()
 	log := actionRunner.Log
 	if len(log) != 3 {
@@ -65,7 +65,7 @@ func Test_Both(t *testing.T) {
 	s.ParIDs([]TaskID{t1, t2})
 	db := NewMockGraphDB(s)
 	actionRunner := actions.NewMockRunner()
-	graphRunner := NewGraphRunner(db, actionRunner)
+	graphRunner := NewRunner(db, actionRunner)
 	graphRunner.Run()
 	log := actionRunner.Log
 	fmt.Println(log)
