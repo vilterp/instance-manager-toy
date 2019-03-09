@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"sort"
+	"strconv"
 
 	"github.com/cockroachlabs/instance_manager/pure_manager/proto"
 	"github.com/spf13/cobra"
@@ -16,19 +17,13 @@ var rootCmd = cobra.Command{
 	Use: "client [command]",
 }
 
-var updateCommand = &cobra.Command{
-	Use: "update",
-	Run: func(cmd *cobra.Command, args []string) {
-		test()
-	},
-}
-
 var nodesCmd = &cobra.Command{
 	Use: "nodes",
 }
 
 var nodesLsCommand = &cobra.Command{
-	Use: "ls",
+	Use:  "ls",
+	Args: cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
 		c := getClient()
 		resp, err := c.ListNodes(context.Background(), &proto.ListNodesRequest{})
@@ -43,7 +38,8 @@ var nodesLsCommand = &cobra.Command{
 }
 
 var nodesStreamCommand = &cobra.Command{
-	Use: "stream",
+	Use:  "stream",
+	Args: cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
 		c := getClient()
 		resp, err := c.StreamNodes(context.Background(), &proto.StreamNodesRequest{
@@ -69,7 +65,8 @@ var graphsCmd = &cobra.Command{
 }
 
 var graphsLsCmd = &cobra.Command{
-	Use: "ls",
+	Use:  "ls",
+	Args: cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
 		c := getClient()
 		resp, err := c.ListTaskGraphs(context.Background(), &proto.ListTaskGraphsRequest{})
@@ -141,6 +138,27 @@ var tasksStreamCmd = &cobra.Command{
 	},
 }
 
+var updateCommand = &cobra.Command{
+	Use:  "update [num] [version]",
+	Args: cobra.ExactArgs(2),
+	Run: func(cmd *cobra.Command, args []string) {
+		num, err := strconv.Atoi(args[0])
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		vers, err := strconv.Atoi(args[1])
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		update(&proto.GroupSpec{
+			NumInstances: int64(num),
+			Version:      int64(vers),
+		})
+	},
+}
+
 //var graphsStreamCmd = &cobra.Command{
 //	Use: "stream",
 //	Run: func(cmd *cobra.Command, args []string) {
@@ -177,22 +195,10 @@ func getClient() proto.GroupManagerClient {
 	return client
 }
 
-func test() {
+func update(newSpec *proto.GroupSpec) {
 	client := getClient()
 
 	ctx := context.Background()
-	fmt.Println("get current spec:")
-	resp, err := client.GetCurrentSpec(ctx, &proto.GetCurrentSpecRequest{})
-	if err != nil {
-		log.Fatal(err)
-	}
-	fmt.Println("\t", resp)
-
-	newSpec := &proto.GroupSpec{
-		NumInstances: 3,
-		Version:      1,
-	}
-	fmt.Println("update to", newSpec)
 	resp2, err2 := client.UpdateSpec(ctx, &proto.UpdateSpecRequest{
 		Spec: newSpec,
 	})
@@ -203,26 +209,6 @@ func test() {
 	resp2.Graph.Spec.Print()
 
 	streamTasks(client, ctx, resp2.Graph.Id)
-	//streamNodes(client, ctx) /**/
-}
-
-func streamNodes(client proto.GroupManagerClient, ctx context.Context) {
-	fmt.Println("stream nodes:")
-	resp, err := client.StreamNodes(ctx, &proto.StreamNodesRequest{
-		IncludeInitial: true,
-	})
-	if err != nil {
-		log.Println(err)
-		return
-	}
-	for {
-		evt, err := resp.Recv()
-		if err != nil {
-			log.Println(err)
-			return
-		}
-		fmt.Println("\tnode evt:", evt)
-	}
 }
 
 func streamTasks(client proto.GroupManagerClient, ctx context.Context, graphID string) {
