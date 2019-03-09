@@ -26,7 +26,7 @@ func NewServer() *Server {
 	}
 }
 
-func (s *Server) UpdateSpec(ctx context.Context, req *proto.UpdateSpecRequest) (*proto.UpdateSpecResponse, error) {
+func (s *Server) UpdateSpec(ctx context.Context, req *proto.UpdateSpecReq) (*proto.UpdateSpecResp, error) {
 	graphSpec, err := Decide(s.db, &proto.Input{
 		Input: &proto.Input_UpdateSpec{
 			UpdateSpec: req,
@@ -44,32 +44,32 @@ func (s *Server) UpdateSpec(ctx context.Context, req *proto.UpdateSpecRequest) (
 		s.db.TaskGraphs.MarkDone(db.TaskGraphID(graph.Id))
 		graphState.MarkGraphDone()
 	}()
-	return &proto.UpdateSpecResponse{
+	return &proto.UpdateSpecResp{
 		Graph: graph,
 	}, nil
 }
 
-func (s *Server) KillNode(context.Context, *proto.KillNodeRequest) (*proto.KillNodeResponse, error) {
+func (s *Server) KillNode(context.Context, *proto.KillNodeReq) (*proto.KillNodeResp, error) {
 	panic("implement me")
 }
 
-func (s *Server) GetCurrentSpec(context.Context, *proto.GetCurrentSpecRequest) (*proto.GetCurrentSpecResponse, error) {
-	return &proto.GetCurrentSpecResponse{
+func (s *Server) GetCurrentSpec(context.Context, *proto.GetCurrentSpecReq) (*proto.GetCurrentSpecResp, error) {
+	return &proto.GetCurrentSpecResp{
 		Spec: s.db.GroupSpec.GetCurrent(),
 	}, nil
 }
 
-func (s *Server) ListSpecs(context.Context, *proto.ListSpecsRequest) (*proto.ListSpecsResponse, error) {
+func (s *Server) ListSpecs(context.Context, *proto.ListSpecsReq) (*proto.ListSpecsResp, error) {
 	panic("implement me")
 }
 
-func (s *Server) ListNodes(context.Context, *proto.ListNodesRequest) (*proto.ListNodesResponse, error) {
-	return &proto.ListNodesResponse{
+func (s *Server) ListNodes(context.Context, *proto.ListNodesReq) (*proto.ListNodesResp, error) {
+	return &proto.ListNodesResp{
 		Instances: s.db.Nodes.List(),
 	}, nil
 }
 
-func (s *Server) StreamNodes(req *proto.StreamNodesRequest, srv proto.GroupManager_StreamNodesServer) error {
+func (s *Server) StreamNodes(req *proto.StreamNodesReq, srv proto.GroupManager_StreamNodesServer) error {
 	if req.IncludeInitial {
 		if err := srv.Send(&proto.NodeEvent{
 			Event: &proto.NodeEvent_InitialList_{
@@ -92,31 +92,31 @@ func (s *Server) StreamNodes(req *proto.StreamNodesRequest, srv proto.GroupManag
 	return nil
 }
 
-func (s *Server) ListTaskGraphs(context.Context, *proto.ListTaskGraphsRequest) (*proto.ListTaskGraphsResponse, error) {
-	return &proto.ListTaskGraphsResponse{
+func (s *Server) ListTaskGraphs(context.Context, *proto.ListTaskGraphsReq) (*proto.ListTaskGraphsResp, error) {
+	return &proto.ListTaskGraphsResp{
 		TaskGraphs: s.db.TaskGraphs.List(),
 	}, nil
 }
 
-func (s *Server) StreamTaskGraphs(*proto.StreamTaskGraphsRequest, proto.GroupManager_StreamTaskGraphsServer) error {
+func (s *Server) StreamTaskGraphs(*proto.StreamTaskGraphsReq, proto.GroupManager_StreamTaskGraphsServer) error {
 	panic("implement me")
 }
 
-func (s *Server) GetTaskGraph(ctx context.Context, req *proto.GetTaskGraphRequest) (*proto.GetTaskGraphResponse, error) {
+func (s *Server) GetTaskGraph(ctx context.Context, req *proto.GetTaskGraphReq) (*proto.GetTaskGraphResp, error) {
 	g, ok := s.db.TaskGraphs.Get(db.TaskGraphID(req.Id))
 	if !ok {
 		return nil, status.Error(codes.NotFound, "no graph with that id")
 	}
-	return &proto.GetTaskGraphResponse{
+	return &proto.GetTaskGraphResp{
 		Graph: g,
 	}, nil
 }
 
-func (s *Server) GetTasks(context.Context, *proto.GetTasksRequest) (*proto.GetTasksResponse, error) {
+func (s *Server) GetTasks(context.Context, *proto.GetTasksReq) (*proto.GetTasksResp, error) {
 	panic("implement me")
 }
 
-func (s *Server) StreamTasks(req *proto.StreamTasksRequest, srv proto.GroupManager_StreamTasksServer) error {
+func (s *Server) StreamTasks(req *proto.StreamTasksReq, srv proto.GroupManager_StreamTasksServer) error {
 	st := s.db.TaskGraphs.GetState(db.TaskGraphID(req.GraphId))
 	if st == nil {
 		return status.Error(codes.NotFound, "no graph with that id")

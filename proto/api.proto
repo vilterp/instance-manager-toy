@@ -27,17 +27,17 @@ message GroupSpec {
   int64 version = 2;
 }
 
-message UpdateSpecRequest {
+message UpdateSpecReq {
   GroupSpec spec = 1;
 }
 
-message UpdateSpecResponse {
+message UpdateSpecResp {
   TaskGraph graph = 1;
 }
 
-message GetCurrentSpecRequest {}
+message GetCurrentSpecReq {}
 
-message GetCurrentSpecResponse {
+message GetCurrentSpecResp {
   GroupSpecInfo spec = 1;
 }
 
@@ -47,21 +47,21 @@ message GroupSpecInfo {
   string created_by_user = 3;
 }
 
-message ListSpecsRequest {}
+message ListSpecsReq {}
 
-message ListSpecsResponse {
+message ListSpecsResp {
   repeated GroupSpecInfo infos = 1;
 }
 
-message ListNodesRequest {
+message ListNodesReq {
 
 }
 
-message ListNodesResponse {
+message ListNodesResp {
   repeated Node instances = 1;
 }
 
-message StreamNodesRequest {
+message StreamNodesReq {
   bool include_initial = 1;
 }
 
@@ -86,10 +86,10 @@ message NodeEvent {
   }
 }
 
-message ListTaskGraphsRequest {
+message ListTaskGraphsReq {
 }
 
-message ListTaskGraphsResponse {
+message ListTaskGraphsResp {
   repeated TaskGraph task_graphs = 1;
 }
 
@@ -148,15 +148,15 @@ enum TaskState {
   TaskSucceeded = 3;
 }
 
-message GetTaskGraphRequest {
+message GetTaskGraphReq {
   string id = 1;
 }
 
-message GetTaskGraphResponse {
+message GetTaskGraphResp {
   TaskGraph graph = 1;
 }
 
-message StreamTaskGraphsRequest {
+message StreamTaskGraphsReq {
   bool include_initial = 1;
 }
 
@@ -197,15 +197,15 @@ message Task {
   repeated string prereq_task_ids = 7;
 }
 
-message GetTasksRequest {
+message GetTasksReq {
   string task_graph_id = 1;
 }
 
-message GetTasksResponse {
+message GetTasksResp {
   repeated Task tasks = 2;
 }
 
-message StreamTasksRequest {
+message StreamTasksReq {
   string graph_id = 1;
   bool include_initial = 2;
 }
@@ -239,37 +239,37 @@ message TaskEvent {
   }
 }
 
-message KillNodeRequest {
+message KillNodeReq {
   string id = 1;
 }
 
-message KillNodeResponse {
+message KillNodeResp {
 }
 
 message Input {
   oneof input {
-    UpdateSpecRequest update_spec = 1;
-    KillNodeRequest kill_node = 2;
+    UpdateSpecReq update_spec = 1;
+    KillNodeReq kill_node = 2;
   }
 }
 
 service GroupManager {
   // Specs
-  rpc UpdateSpec(UpdateSpecRequest) returns (UpdateSpecResponse);
-  rpc KillNode(KillNodeRequest) returns (KillNodeResponse);
-  rpc GetCurrentSpec(GetCurrentSpecRequest) returns (GetCurrentSpecResponse);
-  rpc ListSpecs(ListSpecsRequest) returns (ListSpecsResponse);
+  rpc UpdateSpec(UpdateSpecReq) returns (UpdateSpecResp);
+  rpc KillNode(KillNodeReq) returns (KillNodeResp);
+  rpc GetCurrentSpec(GetCurrentSpecReq) returns (GetCurrentSpecResp);
+  rpc ListSpecs(ListSpecsReq) returns (ListSpecsResp);
 
   // Nodes
-  rpc ListNodes(ListNodesRequest) returns (ListNodesResponse);
-  rpc StreamNodes(StreamNodesRequest) returns (stream NodeEvent);
+  rpc ListNodes(ListNodesReq) returns (ListNodesResp);
+  rpc StreamNodes(StreamNodesReq) returns (stream NodeEvent);
 
   // Task graphs
-  rpc ListTaskGraphs(ListTaskGraphsRequest) returns (ListTaskGraphsResponse);
-  rpc StreamTaskGraphs(StreamTaskGraphsRequest) returns (stream TaskGraphEvent);
-  rpc GetTaskGraph(GetTaskGraphRequest) returns (GetTaskGraphResponse);
+  rpc ListTaskGraphs(ListTaskGraphsReq) returns (ListTaskGraphsResp);
+  rpc StreamTaskGraphs(StreamTaskGraphsReq) returns (stream TaskGraphEvent);
+  rpc GetTaskGraph(GetTaskGraphReq) returns (GetTaskGraphResp);
 
   // Tasks
-  rpc GetTasks(GetTasksRequest) returns (GetTasksResponse);
-  rpc StreamTasks(StreamTasksRequest) returns (stream TaskEvent);
+  rpc GetTasks(GetTasksReq) returns (GetTasksResp);
+  rpc StreamTasks(StreamTasksReq) returns (stream TaskEvent);
 }

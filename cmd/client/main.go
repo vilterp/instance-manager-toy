@@ -29,7 +29,7 @@ var nodesLsCommand = &cobra.Command{
 	Args: cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
 		c := getClient()
-		resp, err := c.ListNodes(context.Background(), &proto.ListNodesRequest{})
+		resp, err := c.ListNodes(context.Background(), &proto.ListNodesReq{})
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
@@ -45,7 +45,7 @@ var nodesStreamCommand = &cobra.Command{
 	Args: cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
 		c := getClient()
-		resp, err := c.StreamNodes(context.Background(), &proto.StreamNodesRequest{
+		resp, err := c.StreamNodes(context.Background(), &proto.StreamNodesReq{
 			IncludeInitial: true,
 		})
 		if err != nil {
@@ -72,7 +72,7 @@ var graphsLsCmd = &cobra.Command{
 	Args: cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
 		c := getClient()
-		resp, err := c.ListTaskGraphs(context.Background(), &proto.ListTaskGraphsRequest{})
+		resp, err := c.ListTaskGraphs(context.Background(), &proto.ListTaskGraphsReq{})
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
@@ -94,7 +94,7 @@ var graphsGetCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		c := getClient()
 		graphID := args[0]
-		resp, err := c.GetTaskGraph(context.Background(), &proto.GetTaskGraphRequest{Id: graphID})
+		resp, err := c.GetTaskGraph(context.Background(), &proto.GetTaskGraphReq{Id: graphID})
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
@@ -131,7 +131,7 @@ var tasksStreamCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		c := getClient()
 		graphID := args[0]
-		resp, err := c.StreamTasks(context.Background(), &proto.StreamTasksRequest{
+		resp, err := c.StreamTasks(context.Background(), &proto.StreamTasksReq{
 			IncludeInitial: true,
 			GraphId:        graphID,
 		})
@@ -175,7 +175,7 @@ var updateCommand = &cobra.Command{
 //	Use: "stream",
 //	Run: func(cmd *cobra.Command, args []string) {
 //		c := getClient()
-//		resp, err := c.StreamTaskGraphs(context.Background(), &proto.StreamTaskGraphsRequest{})
+//		resp, err := c.StreamTaskGraphs(context.Background(), &proto.StreamTaskGraphsReq{})
 //	},
 //}
 
@@ -211,7 +211,7 @@ func update(newSpec *proto.GroupSpec) {
 	client := getClient()
 
 	ctx := context.Background()
-	resp2, err2 := client.UpdateSpec(ctx, &proto.UpdateSpecRequest{
+	resp2, err2 := client.UpdateSpec(ctx, &proto.UpdateSpecReq{
 		Spec: newSpec,
 	})
 	if err2 != nil {
@@ -227,7 +227,7 @@ func update(newSpec *proto.GroupSpec) {
 func streamTasks(client proto.GroupManagerClient, ctx context.Context, graphID string) {
 	fmt.Println("TASKS STREAM:")
 	fmt.Println()
-	resp, err := client.StreamTasks(ctx, &proto.StreamTasksRequest{
+	resp, err := client.StreamTasks(ctx, &proto.StreamTasksReq{
 		GraphId:        graphID,
 		IncludeInitial: true,
 	})

@@ -14,14 +14,14 @@ func TestServer(t *testing.T) {
 	s := NewServer()
 
 	ctx := context.Background()
-	resp, err := s.GetCurrentSpec(ctx, &proto.GetCurrentSpecRequest{})
+	resp, err := s.GetCurrentSpec(ctx, &proto.GetCurrentSpecReq{})
 	if err != nil {
 		log.Fatal(err)
 	}
 	fmt.Println("get current:", resp)
 
 	fmt.Println("update:")
-	resp2, err2 := s.UpdateSpec(ctx, &proto.UpdateSpecRequest{
+	resp2, err2 := s.UpdateSpec(ctx, &proto.UpdateSpecReq{
 		Spec: &proto.GroupSpec{
 			NumInstances: 3,
 		},
@@ -32,7 +32,7 @@ func TestServer(t *testing.T) {
 	fmt.Println(resp2.Graph)
 
 	fmt.Println("stream tasks:")
-	err3 := s.StreamTasks(&proto.StreamTasksRequest{
+	err3 := s.StreamTasks(&proto.StreamTasksReq{
 		GraphId:        resp2.Graph.Id,
 		IncludeInitial: true,
 	}, &mockTaskSrv{})
@@ -41,7 +41,7 @@ func TestServer(t *testing.T) {
 	}
 
 	fmt.Println("updating again")
-	_, err4 := s.UpdateSpec(ctx, &proto.UpdateSpecRequest{
+	_, err4 := s.UpdateSpec(ctx, &proto.UpdateSpecReq{
 		Spec: &proto.GroupSpec{
 			NumInstances: 4,
 		},
@@ -50,7 +50,7 @@ func TestServer(t *testing.T) {
 		log.Fatal(err4)
 	}
 
-	err5 := s.StreamNodes(&proto.StreamNodesRequest{
+	err5 := s.StreamNodes(&proto.StreamNodesReq{
 		IncludeInitial: true,
 	}, &mockNodeSrv{})
 	if err5 != nil {
