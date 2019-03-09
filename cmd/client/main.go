@@ -8,6 +8,9 @@ import (
 	"sort"
 	"strconv"
 
+	"github.com/golang/protobuf/ptypes"
+	"github.com/golang/protobuf/ptypes/timestamp"
+
 	"github.com/cockroachlabs/instance_manager/proto"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
@@ -74,9 +77,13 @@ var graphsLsCmd = &cobra.Command{
 			fmt.Println(err)
 			os.Exit(1)
 		}
+		fmt.Println("ID\tState\tCreated At\tStarted At\tFinished At")
 		for _, tg := range resp.TaskGraphs {
-			tg.Spec = nil
-			fmt.Println(tg)
+			fmt.Printf(
+				"%v\t%v\t%v\t%v\t%v\n",
+				tg.Id, tg.State, formatTimestamp(tg.CreatedAt),
+				formatTimestamp(tg.StartedAt), formatTimestamp(tg.FinishedAt),
+			)
 		}
 	},
 }
@@ -107,8 +114,13 @@ var graphsGetCmd = &cobra.Command{
 		sort.Slice(tasks, func(i, j int) bool {
 			return tasks[i].Id < tasks[j].Id
 		})
+		fmt.Println("ID\tAction\tStartedAt\tFinishedAt\tErr")
 		for _, t := range tasks {
-			fmt.Println(t)
+			fmt.Printf(
+				"%v\t%v\t%v\t%v\t%v\n",
+				t.Id, t.Action, formatTimestamp(t.StartedAt),
+				formatTimestamp(t.FinishedAt), t.Error,
+			)
 		}
 	},
 }
@@ -205,14 +217,16 @@ func update(newSpec *proto.GroupSpec) {
 	if err2 != nil {
 		log.Fatal(err2)
 	}
-	fmt.Println("task graph spec:")
+	fmt.Println("TASK GRAPH SPEC:")
 	resp2.Graph.Spec.Print()
+	fmt.Println()
 
 	streamTasks(client, ctx, resp2.Graph.Id)
 }
 
 func streamTasks(client proto.GroupManagerClient, ctx context.Context, graphID string) {
-	fmt.Println("stream tasks:")
+	fmt.Println("TASKS STREAM:")
+	fmt.Println()
 	resp, err := client.StreamTasks(ctx, &proto.StreamTasksRequest{
 		GraphId:        graphID,
 		IncludeInitial: true,
@@ -228,6 +242,10 @@ func streamTasks(client proto.GroupManagerClient, ctx context.Context, graphID s
 			log.Println(err)
 			return
 		}
-		fmt.Println("\ttask evt:", evt)
+		log.Println("task evt:", evt)
 	}
+}
+
+func formatTimestamp(ts *timestamp.Timestamp) string {
+	return ptypes.TimestampString(ts)
 }

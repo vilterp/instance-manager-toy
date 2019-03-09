@@ -56,17 +56,19 @@ type TaskChain struct {
 }
 
 func (b *SpecBuilder) SerIDs(desc string, list []proto.TaskID) TaskChain {
-	start := b.Unit(nothing(fmt.Sprintf("start %s", desc)))
-	mostDownstream := start
-	for _, t := range list {
-		b.AddDep(mostDownstream, t)
+	var start proto.TaskID
+	var mostDownstream proto.TaskID
+	for i, t := range list {
+		if i != 0 {
+			b.AddDep(mostDownstream, t)
+		} else {
+			start = t
+		}
 		mostDownstream = t
 	}
-	finish := b.Unit(nothing(fmt.Sprintf("finish %s", desc)))
-	b.AddDep(mostDownstream, finish)
 	return TaskChain{
 		Head: start,
-		Tail: finish,
+		Tail: mostDownstream,
 	}
 }
 

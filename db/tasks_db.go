@@ -153,7 +153,6 @@ func (g *MockGraphDB) MarkFailed(id proto.TaskID, err string) {
 }
 
 func (g *MockGraphDB) MarkGraphDone() {
-	fmt.Println("markgraphdone")
 	g.publish(&proto.TaskEvent{
 		Event: &proto.TaskEvent_Done{
 			Done: &proto.TaskEvent_GraphDone{},

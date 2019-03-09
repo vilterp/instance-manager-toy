@@ -42,6 +42,7 @@ func (s *Server) UpdateSpec(ctx context.Context, req *proto.UpdateSpecRequest) (
 	runner := taskgraph.NewRunner(graphState, s.actionRunner)
 	go func() {
 		runner.Run()
+		s.db.TaskGraphs.MarkDone(db.TaskGraphID(graph.Id))
 		graphState.MarkGraphDone()
 	}()
 	return &proto.UpdateSpecResponse{

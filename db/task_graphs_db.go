@@ -14,11 +14,18 @@ type TaskGraphsDB interface {
 	List() []*proto.TaskGraph
 	Get(id TaskGraphID) (*proto.TaskGraph, bool)
 	GetState(id TaskGraphID) TasksDB
+	MarkDone(id TaskGraphID)
 }
 
 type MockTaskGraphsDB struct {
 	graphs      map[TaskGraphID]*proto.TaskGraph
 	graphStates map[TaskGraphID]TasksDB
+}
+
+func (g *MockTaskGraphsDB) MarkDone(id TaskGraphID) {
+	graph := g.graphs[id]
+	graph.FinishedAt = ptypes.TimestampNow()
+	graph.State = proto.TaskGraphState_TaskGraphSucceeded
 }
 
 var _ TaskGraphsDB = &MockTaskGraphsDB{}
