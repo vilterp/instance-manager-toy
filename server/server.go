@@ -28,11 +28,14 @@ func NewServer() *Server {
 }
 
 func (s *Server) UpdateSpec(ctx context.Context, req *proto.UpdateSpecRequest) (*proto.UpdateSpecResponse, error) {
-	graphSpec := Decide(s.db, &proto.Input{
+	graphSpec, err := Decide(s.db, &proto.Input{
 		Input: &proto.Input_UpdateSpec{
 			UpdateSpec: req,
 		},
 	})
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid spec:", err)
+	}
 	graph := s.db.TaskGraphs.Insert(graphSpec)
 	graphState := s.db.TaskGraphs.GetState(db.TaskGraphID(graph.Id))
 	runner := taskgraph.NewGraphRunner(graphState, s.actionRunner)
