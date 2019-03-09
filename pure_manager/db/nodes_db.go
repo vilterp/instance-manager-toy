@@ -11,7 +11,7 @@ type SubID int
 
 type NodeStateDB interface {
 	List() []*proto.Node
-	ListHealthy() []*proto.Node
+	ListAll() []*proto.Node
 	Stream() (SubID, chan *proto.NodeEvent)
 	Unsubscribe(id SubID)
 
@@ -84,20 +84,20 @@ func (m *mockNodesDB) Insert(n *proto.Node) {
 	})
 }
 
-func (m *mockNodesDB) List() []*proto.Node {
+func (m *mockNodesDB) ListAll() []*proto.Node {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
 	return m.instancesList
 }
 
-func (m *mockNodesDB) ListHealthy() []*proto.Node {
+func (m *mockNodesDB) List() []*proto.Node {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
 	var out []*proto.Node
 	for _, i := range m.instancesList {
-		if i.State == proto.NodeState_NodeRunning {
+		if i.State == proto.NodeState_NodeRunning || i.State == proto.NodeState_NodeUnhealthy {
 			out = append(out, i)
 		}
 	}
