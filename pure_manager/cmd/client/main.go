@@ -40,8 +40,8 @@ func main() {
 	fmt.Println("task graph spec:")
 	resp2.Graph.Spec.Print()
 
-	//go streamTasks(client, ctx, resp2.Graph.Id)
-	streamNodes(client, ctx) /**/
+	streamTasks(client, ctx, resp2.Graph.Id)
+	//streamNodes(client, ctx) /**/
 }
 
 func streamNodes(client proto.GroupManagerClient, ctx context.Context) {
@@ -50,12 +50,14 @@ func streamNodes(client proto.GroupManagerClient, ctx context.Context) {
 		IncludeInitial: true,
 	})
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
+		return
 	}
 	for {
 		evt, err := resp.Recv()
 		if err != nil {
-			log.Fatal(err)
+			log.Println(err)
+			return
 		}
 		fmt.Println("\tnode evt:", evt)
 	}
@@ -63,18 +65,20 @@ func streamNodes(client proto.GroupManagerClient, ctx context.Context) {
 
 func streamTasks(client proto.GroupManagerClient, ctx context.Context, graphID string) {
 	fmt.Println("stream tasks:")
-	resp3, err3 := client.StreamTasks(ctx, &proto.StreamTasksRequest{
+	resp, err := client.StreamTasks(ctx, &proto.StreamTasksRequest{
 		GraphId:        graphID,
 		IncludeInitial: true,
 	})
-	if err3 != nil {
-		log.Fatal(err3)
+	if err != nil {
+		log.Println(err)
+		return
 	}
 
 	for {
-		evt, err := resp3.Recv()
+		evt, err := resp.Recv()
 		if err != nil {
-			log.Fatalf("%#v", err)
+			log.Println(err)
+			return
 		}
 		fmt.Println("\ttask evt:", evt)
 	}

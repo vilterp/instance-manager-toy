@@ -2,6 +2,7 @@ package db
 
 import (
 	"log"
+	"sync"
 
 	"github.com/cockroachlabs/instance_manager/pure_manager/proto"
 )
@@ -20,6 +21,8 @@ type NodeStateDB interface {
 }
 
 type mockNodesDB struct {
+	mu sync.RWMutex
+
 	instancesByID map[proto.NodeID]*proto.Node
 	instancesList []*proto.Node
 
@@ -50,6 +53,9 @@ func (m *mockNodesDB) Unsubscribe(id SubID) {
 }
 
 func (m *mockNodesDB) UpdateState(id proto.NodeID, newState proto.NodeState) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
 	m.instancesByID[id].State = newState
 
 	m.publish(&proto.NodeEvent{
@@ -63,6 +69,9 @@ func (m *mockNodesDB) UpdateState(id proto.NodeID, newState proto.NodeState) {
 }
 
 func (m *mockNodesDB) Insert(n *proto.Node) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
 	m.instancesByID[proto.NodeID(n.Id)] = n
 	m.instancesList = append(m.instancesList, n)
 
@@ -76,10 +85,16 @@ func (m *mockNodesDB) Insert(n *proto.Node) {
 }
 
 func (m *mockNodesDB) List() []*proto.Node {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
 	return m.instancesList
 }
 
 func (m *mockNodesDB) ListHealthy() []*proto.Node {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
 	var out []*proto.Node
 	for _, i := range m.instancesList {
 		if i.State == proto.NodeState_NodeRunning {

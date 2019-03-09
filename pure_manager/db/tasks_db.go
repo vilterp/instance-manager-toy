@@ -153,6 +153,7 @@ func (g *MockGraphDB) MarkFailed(id proto.TaskID, err string) {
 }
 
 func (g *MockGraphDB) MarkGraphDone() {
+	fmt.Println("markgraphdone")
 	g.publish(&proto.TaskEvent{
 		Event: &proto.TaskEvent_Done{
 			Done: &proto.TaskEvent_GraphDone{},
@@ -161,15 +162,18 @@ func (g *MockGraphDB) MarkGraphDone() {
 }
 
 func (g *MockGraphDB) publish(evt *proto.TaskEvent) {
+	fmt.Printf("publishing %+v to %v\n", evt, g.eventSubs)
 	for _, c := range g.eventSubs {
 		// TODO: one of these could block the rest...
 		switch evt.Event.(type) {
 		case *proto.TaskEvent_Done:
+			fmt.Println("closing channel", c)
 			close(c)
 		default:
 			c <- evt
 		}
 	}
+	fmt.Printf("done publishing %+v\n", evt)
 }
 
 func (g *MockGraphDB) Stream() (SubID, chan *proto.TaskEvent) {

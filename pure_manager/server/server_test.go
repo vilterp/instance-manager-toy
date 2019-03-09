@@ -6,9 +6,8 @@ import (
 	"log"
 	"testing"
 
-	"google.golang.org/grpc/metadata"
-
 	"github.com/cockroachlabs/instance_manager/pure_manager/proto"
+	"google.golang.org/grpc/metadata"
 )
 
 func TestServer(t *testing.T) {
@@ -36,44 +35,94 @@ func TestServer(t *testing.T) {
 	err3 := s.StreamTasks(&proto.StreamTasksRequest{
 		GraphId:        resp2.Graph.Id,
 		IncludeInitial: true,
-	}, &mockSrv{})
+	}, &mockTaskSrv{})
 	if err3 != nil {
 		log.Fatal(err3)
+	}
+
+	fmt.Println("updating again")
+	_, err4 := s.UpdateSpec(ctx, &proto.UpdateSpecRequest{
+		Spec: &proto.GroupSpec{
+			NumInstances: 4,
+		},
+	})
+	if err4 != nil {
+		log.Fatal(err4)
+	}
+
+	err5 := s.StreamNodes(&proto.StreamNodesRequest{
+		IncludeInitial: true,
+	}, &mockNodeSrv{})
+	if err5 != nil {
+		log.Fatal(err5)
 	}
 
 	// TODO: get events
 }
 
-type mockSrv struct {
+type mockTaskSrv struct {
 }
 
-func (s *mockSrv) Send(evt *proto.TaskEvent) error {
+func (s *mockTaskSrv) Send(evt *proto.TaskEvent) error {
 	fmt.Println("sent", evt)
 	return nil
 }
 
-func (mockSrv) SetHeader(metadata.MD) error {
+func (mockTaskSrv) SetHeader(metadata.MD) error {
 	panic("implement me")
 }
 
-func (mockSrv) SendHeader(metadata.MD) error {
+func (mockTaskSrv) SendHeader(metadata.MD) error {
 	panic("implement me")
 }
 
-func (mockSrv) SetTrailer(metadata.MD) {
+func (mockTaskSrv) SetTrailer(metadata.MD) {
 	panic("implement me")
 }
 
-func (mockSrv) Context() context.Context {
+func (mockTaskSrv) Context() context.Context {
 	panic("implement me")
 }
 
-func (mockSrv) SendMsg(m interface{}) error {
+func (mockTaskSrv) SendMsg(m interface{}) error {
 	panic("implement me")
 }
 
-func (mockSrv) RecvMsg(m interface{}) error {
+func (mockTaskSrv) RecvMsg(m interface{}) error {
 	panic("implement me")
 }
 
-var _ proto.GroupManager_StreamTasksServer = &mockSrv{}
+var _ proto.GroupManager_StreamTasksServer = &mockTaskSrv{}
+
+type mockNodeSrv struct{}
+
+func (mockNodeSrv) Send(evt *proto.NodeEvent) error {
+	fmt.Println("sent", evt)
+	return nil
+}
+
+func (mockNodeSrv) SetHeader(metadata.MD) error {
+	panic("implement me")
+}
+
+func (mockNodeSrv) SendHeader(metadata.MD) error {
+	panic("implement me")
+}
+
+func (mockNodeSrv) SetTrailer(metadata.MD) {
+	panic("implement me")
+}
+
+func (mockNodeSrv) Context() context.Context {
+	panic("implement me")
+}
+
+func (mockNodeSrv) SendMsg(m interface{}) error {
+	panic("implement me")
+}
+
+func (mockNodeSrv) RecvMsg(m interface{}) error {
+	panic("implement me")
+}
+
+var _ proto.GroupManager_StreamNodesServer = &mockNodeSrv{}

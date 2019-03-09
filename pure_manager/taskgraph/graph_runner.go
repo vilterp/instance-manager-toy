@@ -45,6 +45,7 @@ func (g *GraphRunner) Run() {
 			g.running--
 		}
 	}
+	log.Println("finished graph")
 }
 
 func (g *GraphRunner) runNext() {
