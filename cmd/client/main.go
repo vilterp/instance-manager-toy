@@ -8,10 +8,9 @@ import (
 	"sort"
 	"strconv"
 
+	"github.com/cockroachlabs/instance_manager/proto"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/timestamp"
-
-	"github.com/cockroachlabs/instance_manager/proto"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 )
@@ -151,7 +150,7 @@ var tasksStreamCmd = &cobra.Command{
 }
 
 var updateCommand = &cobra.Command{
-	Use:  "update [num] [version]",
+	Use:  "scale-up [by] [version]",
 	Args: cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 		num, err := strconv.Atoi(args[0])
@@ -164,10 +163,14 @@ var updateCommand = &cobra.Command{
 			fmt.Println(err)
 			os.Exit(1)
 		}
-		update(&proto.GroupSpec{
-			NumInstances: int64(num),
-			Version:      int64(vers),
+		c := getClient()
+		resp, err := c.ScaleUp(context.Background(), &proto.ScaleUpReq{
+			Increase: int64(num),
+			Spec: &proto.NodeSpec{
+				Version: int64(vers),
+			},
 		})
+		streamTasks(c, context.Background(), resp.Graph.Id)
 	},
 }
 
@@ -205,23 +208,6 @@ func getClient() proto.GroupManagerClient {
 	}
 	client := proto.NewGroupManagerClient(conn)
 	return client
-}
-
-func update(newSpec *proto.GroupSpec) {
-	client := getClient()
-
-	ctx := context.Background()
-	resp2, err2 := client.UpdateSpec(ctx, &proto.UpdateSpecReq{
-		Spec: newSpec,
-	})
-	if err2 != nil {
-		log.Fatal(err2)
-	}
-	fmt.Println("TASK GRAPH SPEC:")
-	resp2.Graph.Spec.Print()
-	fmt.Println()
-
-	streamTasks(client, ctx, resp2.Graph.Id)
 }
 
 func streamTasks(client proto.GroupManagerClient, ctx context.Context, graphID string) {

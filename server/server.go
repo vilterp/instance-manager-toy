@@ -2,13 +2,13 @@ package server
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"sync"
 
 	"github.com/cockroachlabs/instance_manager/actions"
 	"github.com/cockroachlabs/instance_manager/db"
 	"github.com/cockroachlabs/instance_manager/proto"
+	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -36,25 +36,34 @@ func (s *Server) ScaleUp(ctx context.Context, req *proto.ScaleUpReq) (*proto.Sca
 	for i := int64(0); i < req.Increase; i++ {
 		wg.Add(1)
 		go func() {
-			// mark started
 			action := proto.MkStartNode(req.Spec)
-			taskID := tasks.Insert(proto.TaskID(fmt.Sprintf("%d", i)), action)
-			tasks.MarkStarted(taskID)
-			if err := s.actionRunner.Run(action); err != nil {
-				log.Println(err)
-				tasks.MarkFailed(taskID, err.Error())
-			} else {
-				tasks.MarkSucceeded(taskID)
+			if err := s.runTask(tasks, action); err != nil {
+				log.Println("error scaling up:", g.Id)
 			}
 			wg.Done()
 		}()
 	}
 	go func() {
 		wg.Wait()
+		s.db.TaskGraphs.MarkDone(db.TaskGraphID(g.Id))
+		tasks.MarkGraphDone()
 	}()
 	return &proto.ScaleUpResp{
 		Graph: g,
 	}, nil
+}
+
+func (s *Server) runTask(tasks db.TasksDB, action *proto.Action) error {
+	id := uuid.New()
+	taskID := tasks.Insert(proto.TaskID(id.String()), action)
+	tasks.MarkStarted(taskID)
+	if err := s.actionRunner.Run(action); err != nil {
+		log.Println(err)
+		tasks.MarkFailed(taskID, err.Error())
+		return err
+	}
+	tasks.MarkSucceeded(taskID)
+	return nil
 }
 
 func (s *Server) KillNode(context.Context, *proto.KillNodeReq) (*proto.KillNodeResp, error) {

@@ -2,6 +2,7 @@ package db
 
 import (
 	"fmt"
+	"sync"
 
 	"github.com/cockroachlabs/instance_manager/proto"
 	"github.com/golang/protobuf/ptypes"
@@ -24,6 +25,8 @@ type TasksDB interface {
 }
 
 type MockGraphDB struct {
+	mu sync.RWMutex
+
 	tasks      map[proto.TaskID]*proto.Task
 	downstream map[proto.TaskID][]proto.TaskID
 	upstream   map[proto.TaskID][]proto.TaskID
@@ -64,6 +67,9 @@ func NewMockTasksDB(s *proto.TaskGraphSpec) *MockGraphDB {
 }
 
 func (g *MockGraphDB) List() []*proto.Task {
+	g.mu.RLock()
+	defer g.mu.RUnlock()
+
 	var out []*proto.Task
 	for _, t := range g.tasks {
 		out = append(out, t)
@@ -72,6 +78,9 @@ func (g *MockGraphDB) List() []*proto.Task {
 }
 
 func (g *MockGraphDB) Insert(id proto.TaskID, a *proto.Action) proto.TaskID {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+
 	task := &proto.Task{
 		Id:     string(id),
 		Action: a,
@@ -85,11 +94,17 @@ func (g *MockGraphDB) Insert(id proto.TaskID, a *proto.Action) proto.TaskID {
 }
 
 func (g *MockGraphDB) AddDep(doFirst proto.TaskID, thenDo proto.TaskID) {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+
 	g.downstream[doFirst] = append(g.downstream[doFirst], thenDo)
 	g.upstream[thenDo] = append(g.upstream[thenDo], doFirst)
 }
 
 func (g *MockGraphDB) GetUnblockedTasks() []*proto.Task {
+	g.mu.RLock()
+	defer g.mu.RUnlock()
+
 	var out []*proto.Task
 	for id := range g.waitingTasks {
 		upstreams := g.upstream[id]
@@ -108,10 +123,14 @@ func (g *MockGraphDB) GetUnblockedTasks() []*proto.Task {
 }
 
 func (g *MockGraphDB) MarkStarted(id proto.TaskID) {
+	g.mu.Lock()
+
 	t := g.tasks[id]
 	t.State = proto.TaskState_TaskRunning
 	t.StartedAt = ptypes.TimestampNow()
 	delete(g.waitingTasks, id)
+
+	g.mu.Unlock()
 
 	g.publish(&proto.TaskEvent{
 		Event: &proto.TaskEvent_Started_{
@@ -123,9 +142,13 @@ func (g *MockGraphDB) MarkStarted(id proto.TaskID) {
 }
 
 func (g *MockGraphDB) MarkSucceeded(id proto.TaskID) {
+	g.mu.Lock()
+
 	t := g.tasks[id]
 	t.FinishedAt = ptypes.TimestampNow()
 	t.State = proto.TaskState_TaskSucceeded
+
+	g.mu.Unlock()
 
 	g.publish(&proto.TaskEvent{
 		Event: &proto.TaskEvent_Succeeded_{
@@ -137,10 +160,14 @@ func (g *MockGraphDB) MarkSucceeded(id proto.TaskID) {
 }
 
 func (g *MockGraphDB) MarkFailed(id proto.TaskID, err string) {
+	g.mu.Lock()
+
 	t := g.tasks[id]
 	t.FinishedAt = ptypes.TimestampNow()
 	t.State = proto.TaskState_TaskFailed
 	t.Error = err
+
+	g.mu.Unlock()
 
 	g.publish(&proto.TaskEvent{
 		Event: &proto.TaskEvent_Failed_{
