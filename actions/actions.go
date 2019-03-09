@@ -7,9 +7,9 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/cockroachlabs/instance_manager/pure_manager/db"
-	"github.com/cockroachlabs/instance_manager/pure_manager/proto"
-	"github.com/cockroachlabs/instance_manager/pure_manager/util"
+	"github.com/cockroachlabs/instance_manager/db"
+	"github.com/cockroachlabs/instance_manager/proto"
+	"github.com/cockroachlabs/instance_manager/util"
 )
 
 type Runner interface {

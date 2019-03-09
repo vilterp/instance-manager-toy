@@ -4,7 +4,7 @@ import (
 	"log"
 	"sync"
 
-	"github.com/cockroachlabs/instance_manager/pure_manager/proto"
+	"github.com/cockroachlabs/instance_manager/proto"
 )
 
 type SubID int

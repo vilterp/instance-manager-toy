@@ -3,9 +3,9 @@ package taskgraph
 import (
 	"log"
 
-	"github.com/cockroachlabs/instance_manager/pure_manager/actions"
-	"github.com/cockroachlabs/instance_manager/pure_manager/db"
-	"github.com/cockroachlabs/instance_manager/pure_manager/proto"
+	"github.com/cockroachlabs/instance_manager/actions"
+	"github.com/cockroachlabs/instance_manager/db"
+	"github.com/cockroachlabs/instance_manager/proto"
 )
 
 type GraphRunner struct {

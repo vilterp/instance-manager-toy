@@ -3,7 +3,7 @@ package db
 import (
 	"fmt"
 
-	"github.com/cockroachlabs/instance_manager/pure_manager/proto"
+	"github.com/cockroachlabs/instance_manager/proto"
 	"github.com/golang/protobuf/ptypes"
 )
 

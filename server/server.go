@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/cockroachlabs/instance_manager/pure_manager/actions"
-	"github.com/cockroachlabs/instance_manager/pure_manager/db"
-	"github.com/cockroachlabs/instance_manager/pure_manager/proto"
-	"github.com/cockroachlabs/instance_manager/pure_manager/taskgraph"
+	"github.com/cockroachlabs/instance_manager/actions"
+	"github.com/cockroachlabs/instance_manager/db"
+	"github.com/cockroachlabs/instance_manager/proto"
+	"github.com/cockroachlabs/instance_manager/taskgraph"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )

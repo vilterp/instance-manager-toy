@@ -3,8 +3,8 @@ package server
 import (
 	"fmt"
 
-	"github.com/cockroachlabs/instance_manager/pure_manager/db"
-	"github.com/cockroachlabs/instance_manager/pure_manager/proto"
+	"github.com/cockroachlabs/instance_manager/db"
+	"github.com/cockroachlabs/instance_manager/proto"
 )
 
 func Decide(st *db.StateDB, input *proto.Input) *proto.TaskGraphSpec {

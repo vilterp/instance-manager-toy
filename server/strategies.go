@@ -1,8 +1,8 @@
 package server
 
 import (
-	"github.com/cockroachlabs/instance_manager/pure_manager/proto"
-	"github.com/cockroachlabs/instance_manager/pure_manager/taskgraph"
+	"github.com/cockroachlabs/instance_manager/proto"
+	"github.com/cockroachlabs/instance_manager/taskgraph"
 )
 
 type builder struct {

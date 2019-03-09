@@ -4,8 +4,8 @@ import (
 	"log"
 	"net"
 
-	"github.com/cockroachlabs/instance_manager/pure_manager/proto"
-	"github.com/cockroachlabs/instance_manager/pure_manager/server"
+	"github.com/cockroachlabs/instance_manager/proto"
+	"github.com/cockroachlabs/instance_manager/server"
 	"github.com/grpc-ecosystem/go-grpc-middleware"
 	"google.golang.org/grpc"
 )

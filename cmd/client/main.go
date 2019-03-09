@@ -8,7 +8,7 @@ import (
 	"sort"
 	"strconv"
 
-	"github.com/cockroachlabs/instance_manager/pure_manager/proto"
+	"github.com/cockroachlabs/instance_manager/proto"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 )
