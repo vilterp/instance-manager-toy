@@ -1,7 +1,6 @@
 package db
 
 import (
-	"log"
 	"sync"
 
 	"github.com/cockroachlabs/instance_manager/proto"
@@ -48,7 +47,6 @@ func (m *mockNodesDB) Stream() (SubID, chan *proto.NodeEvent) {
 }
 
 func (m *mockNodesDB) Unsubscribe(id SubID) {
-	log.Println("unsub", id)
 	delete(m.subs, id)
 }
 
@@ -105,7 +103,6 @@ func (m *mockNodesDB) List() []*proto.Node {
 }
 
 func (m *mockNodesDB) publish(evt *proto.NodeEvent) {
-	log.Println("publish", evt, m.subs)
 	for _, c := range m.subs {
 		c <- evt
 	}

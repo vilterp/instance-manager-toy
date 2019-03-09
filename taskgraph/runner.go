@@ -1,8 +1,6 @@
 package taskgraph
 
 import (
-	"log"
-
 	"github.com/cockroachlabs/instance_manager/actions"
 	"github.com/cockroachlabs/instance_manager/db"
 	"github.com/cockroachlabs/instance_manager/proto"
@@ -29,7 +27,6 @@ func NewRunner(db db.TasksDB, runner actions.Runner) *Runner {
 func (g *Runner) Run() {
 	g.runNext()
 	for g.toDo > 0 {
-		log.Println("todo", g.toDo, "running", g.running)
 		g.runNext()
 		evt := <-g.events
 		switch tEvt := evt.Event.(type) {
@@ -45,7 +42,6 @@ func (g *Runner) Run() {
 			g.running--
 		}
 	}
-	log.Println("finished graph")
 }
 
 func (g *Runner) runNext() {

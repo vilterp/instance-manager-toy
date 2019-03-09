@@ -2,7 +2,6 @@ package server
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/cockroachlabs/instance_manager/actions"
 	"github.com/cockroachlabs/instance_manager/db"
@@ -147,6 +146,5 @@ func (s *Server) StreamTasks(req *proto.StreamTasksRequest, srv proto.GroupManag
 			return err
 		}
 	}
-	fmt.Println("done StreamTasks")
 	return nil
 }
