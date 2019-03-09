@@ -8,6 +8,8 @@ import (
 	"github.com/cockroachlabs/instance_manager/pure_manager/db"
 	"github.com/cockroachlabs/instance_manager/pure_manager/proto"
 	"github.com/cockroachlabs/instance_manager/pure_manager/taskgraph"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type Server struct {
@@ -58,7 +60,9 @@ func (s *Server) ListSpecs(context.Context, *proto.ListSpecsRequest) (*proto.Lis
 }
 
 func (s *Server) ListNodes(context.Context, *proto.ListNodesRequest) (*proto.ListNodesResponse, error) {
-	panic("implement me")
+	return &proto.ListNodesResponse{
+		Instances: s.db.Nodes.List(),
+	}, nil
 }
 
 func (s *Server) StreamNodes(req *proto.StreamNodesRequest, srv proto.GroupManager_StreamNodesServer) error {
@@ -85,11 +89,23 @@ func (s *Server) StreamNodes(req *proto.StreamNodesRequest, srv proto.GroupManag
 }
 
 func (s *Server) ListTaskGraphs(context.Context, *proto.ListTaskGraphsRequest) (*proto.ListTaskGraphsResponse, error) {
-	panic("implement me")
+	return &proto.ListTaskGraphsResponse{
+		TaskGraphs: s.db.TaskGraphs.List(),
+	}, nil
 }
 
 func (s *Server) StreamTaskGraphs(*proto.StreamTaskGraphsRequest, proto.GroupManager_StreamTaskGraphsServer) error {
 	panic("implement me")
+}
+
+func (s *Server) GetTaskGraph(ctx context.Context, req *proto.GetTaskGraphRequest) (*proto.GetTaskGraphResponse, error) {
+	g, ok := s.db.TaskGraphs.Get(db.TaskGraphID(req.Id))
+	if !ok {
+		return nil, status.Error(codes.NotFound, "no graph with that id")
+	}
+	return &proto.GetTaskGraphResponse{
+		Graph: g,
+	}, nil
 }
 
 func (s *Server) GetTasks(context.Context, *proto.GetTasksRequest) (*proto.GetTasksResponse, error) {
@@ -98,6 +114,9 @@ func (s *Server) GetTasks(context.Context, *proto.GetTasksRequest) (*proto.GetTa
 
 func (s *Server) StreamTasks(req *proto.StreamTasksRequest, srv proto.GroupManager_StreamTasksServer) error {
 	st := s.db.TaskGraphs.GetState(db.TaskGraphID(req.GraphId))
+	if st == nil {
+		return status.Error(codes.NotFound, "no graph with that id")
+	}
 	if req.IncludeInitial {
 		for _, t := range st.List() {
 			var b []byte

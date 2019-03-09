@@ -12,12 +12,32 @@ type TaskGraphID string
 type TaskGraphsDB interface {
 	Insert(g *proto.TaskGraphSpec) *proto.TaskGraph
 	List() []*proto.TaskGraph
+	Get(id TaskGraphID) (*proto.TaskGraph, bool)
 	GetState(id TaskGraphID) TasksDB
 }
 
 type MockTaskGraphsDB struct {
 	graphs      map[TaskGraphID]*proto.TaskGraph
 	graphStates map[TaskGraphID]TasksDB
+}
+
+var _ TaskGraphsDB = &MockTaskGraphsDB{}
+
+func NewMockTaskGraphsDB() *MockTaskGraphsDB {
+	return &MockTaskGraphsDB{
+		graphs:      map[TaskGraphID]*proto.TaskGraph{},
+		graphStates: map[TaskGraphID]TasksDB{},
+	}
+}
+
+func (g *MockTaskGraphsDB) Get(id TaskGraphID) (*proto.TaskGraph, bool) {
+	graph, ok := g.graphs[id]
+	if !ok {
+		return nil, ok
+	}
+	tasks := g.graphStates[id].List()
+	graph.Tasks = tasks
+	return graph, ok
 }
 
 func (g *MockTaskGraphsDB) List() []*proto.TaskGraph {
@@ -31,17 +51,6 @@ func (g *MockTaskGraphsDB) List() []*proto.TaskGraph {
 func (g *MockTaskGraphsDB) GetState(id TaskGraphID) TasksDB {
 	return g.graphStates[id]
 }
-
-var _ TaskGraphsDB = &MockTaskGraphsDB{}
-
-func NewMockTaskGraphsDB() *MockTaskGraphsDB {
-	return &MockTaskGraphsDB{
-		graphs:      map[TaskGraphID]*proto.TaskGraph{},
-		graphStates: map[TaskGraphID]TasksDB{},
-	}
-}
-
-var _ TaskGraphsDB = &MockTaskGraphsDB{}
 
 func (g *MockTaskGraphsDB) Insert(spec *proto.TaskGraphSpec) *proto.TaskGraph {
 	id := TaskGraphID(uuid.New().String())

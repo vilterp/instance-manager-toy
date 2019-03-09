@@ -16,6 +16,7 @@ func main() {
 		grpc.UnaryInterceptor(
 			grpc_middleware.ChainUnaryServer(
 				server.LogUnaryInterceptor,
+				server.RecoveryUnaryInterceptor,
 			),
 		),
 	)

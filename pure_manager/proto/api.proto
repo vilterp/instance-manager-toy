@@ -148,6 +148,14 @@ enum TaskState {
   TaskSucceeded = 3;
 }
 
+message GetTaskGraphRequest {
+  string id = 1;
+}
+
+message GetTaskGraphResponse {
+  TaskGraph graph = 1;
+}
+
 message StreamTaskGraphsRequest {
   bool include_initial = 1;
 }
@@ -259,6 +267,7 @@ service GroupManager {
   // Task graphs
   rpc ListTaskGraphs(ListTaskGraphsRequest) returns (ListTaskGraphsResponse);
   rpc StreamTaskGraphs(StreamTaskGraphsRequest) returns (stream TaskGraphEvent);
+  rpc GetTaskGraph(GetTaskGraphRequest) returns (GetTaskGraphResponse);
 
   // Tasks
   rpc GetTasks(GetTasksRequest) returns (GetTasksResponse);
