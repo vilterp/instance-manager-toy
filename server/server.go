@@ -2,11 +2,13 @@ package server
 
 import (
 	"context"
+	"fmt"
+	"log"
+	"sync"
 
 	"github.com/cockroachlabs/instance_manager/actions"
 	"github.com/cockroachlabs/instance_manager/db"
 	"github.com/cockroachlabs/instance_manager/proto"
-	"github.com/cockroachlabs/instance_manager/taskgraph"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -26,26 +28,32 @@ func NewServer() *Server {
 	}
 }
 
-func (s *Server) UpdateSpec(ctx context.Context, req *proto.UpdateSpecReq) (*proto.UpdateSpecResp, error) {
-	graphSpec, err := Decide(s.db, &proto.Input{
-		Input: &proto.Input_UpdateSpec{
-			UpdateSpec: req,
-		},
-	})
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid spec:", err)
+func (s *Server) ScaleUp(ctx context.Context, req *proto.ScaleUpReq) (*proto.ScaleUpResp, error) {
+	tgs := newBuilder().Build()
+	g := s.db.TaskGraphs.Insert(tgs)
+	tasks := s.db.TaskGraphs.GetState(db.TaskGraphID(g.Id))
+	wg := sync.WaitGroup{}
+	for i := int64(0); i < req.Increase; i++ {
+		wg.Add(1)
+		go func() {
+			// mark started
+			action := proto.MkStartNode(req.Spec)
+			taskID := tasks.Insert(proto.TaskID(fmt.Sprintf("%d", i)), action)
+			tasks.MarkStarted(taskID)
+			if err := s.actionRunner.Run(action); err != nil {
+				log.Println(err)
+				tasks.MarkFailed(taskID, err.Error())
+			} else {
+				tasks.MarkSucceeded(taskID)
+			}
+			wg.Done()
+		}()
 	}
-	graphSpec.Print()
-	graph := s.db.TaskGraphs.Insert(graphSpec)
-	graphState := s.db.TaskGraphs.GetState(db.TaskGraphID(graph.Id))
-	runner := taskgraph.NewRunner(graphState, s.actionRunner)
 	go func() {
-		runner.Run()
-		s.db.TaskGraphs.MarkDone(db.TaskGraphID(graph.Id))
-		graphState.MarkGraphDone()
+		wg.Wait()
 	}()
-	return &proto.UpdateSpecResp{
-		Graph: graph,
+	return &proto.ScaleUpResp{
+		Graph: g,
 	}, nil
 }
 
