@@ -44,30 +44,59 @@ func (b *SpecBuilder) ParIDs(desc string, list []proto.TaskID) proto.TaskID {
 		ids = append(ids, string(tid))
 	}
 	b.spec.Tasks[string(id)] = &proto.TaskSpec{
-		Action: &proto.Action{
-			Action: &proto.Action_DoNothing{
-				DoNothing: &proto.DoNothing{
-					Description: desc,
-				},
-			},
-		},
+		Action:        nothing(desc),
 		PrereqTaskIds: ids,
 	}
 	return id
 }
 
-func (b *SpecBuilder) SerIDs(list []proto.TaskID) proto.TaskID {
-	mostDownstream := proto.TaskID("")
+type TaskChain struct {
+	Head proto.TaskID
+	Tail proto.TaskID
+}
+
+func (b *SpecBuilder) SerIDs(desc string, list []proto.TaskID) TaskChain {
+	start := b.Unit(nothing(fmt.Sprintf("start %s", desc)))
+	mostDownstream := start
 	for _, t := range list {
-		if mostDownstream != proto.TaskID("") {
-			b.AddDep(mostDownstream, t)
-		}
+		b.AddDep(mostDownstream, t)
 		mostDownstream = t
 	}
-	return mostDownstream
+	finish := b.Unit(nothing(fmt.Sprintf("finish %s", desc)))
+	b.AddDep(mostDownstream, finish)
+	return TaskChain{
+		Head: start,
+		Tail: finish,
+	}
+}
+
+func (b *SpecBuilder) SerChains(chains []TaskChain) TaskChain {
+	start := chains[0].Head
+	mostDownstream := chains[0].Tail
+	for _, c := range chains {
+		if c.Tail == mostDownstream {
+			continue
+		}
+		b.AddDep(mostDownstream, c.Head)
+		mostDownstream = c.Tail
+	}
+	return TaskChain{
+		Head: start,
+		Tail: mostDownstream,
+	}
 }
 
 func (b *SpecBuilder) AddDep(doFirst proto.TaskID, thenDo proto.TaskID) {
 	downstream := b.spec.Tasks[string(thenDo)]
 	downstream.PrereqTaskIds = append(downstream.PrereqTaskIds, string(doFirst))
+}
+
+func nothing(desc string) *proto.Action {
+	return &proto.Action{
+		Action: &proto.Action_DoNothing{
+			DoNothing: &proto.DoNothing{
+				Description: desc,
+			},
+		},
+	}
 }

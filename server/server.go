@@ -36,6 +36,7 @@ func (s *Server) UpdateSpec(ctx context.Context, req *proto.UpdateSpecRequest) (
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid spec:", err)
 	}
+	graphSpec.Print()
 	graph := s.db.TaskGraphs.Insert(graphSpec)
 	graphState := s.db.TaskGraphs.GetState(db.TaskGraphID(graph.Id))
 	runner := taskgraph.NewGraphRunner(graphState, s.actionRunner)

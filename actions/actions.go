@@ -30,7 +30,7 @@ func NewMockRunner(nodes db.NodeStateDB) *MockRunner {
 
 var _ Runner = &MockRunner{}
 
-var sleepTimeDist = util.DurDist{Base: 1 * time.Second, Variance: 1 * time.Second}
+var sleepTimeDist = util.DurDist{Base: 3 * time.Second, Variance: 3 * time.Second}
 
 func (m *MockRunner) Run(a *proto.Action) error {
 	log.Println("running", a.String())

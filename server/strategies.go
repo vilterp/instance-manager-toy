@@ -25,10 +25,10 @@ func (b *builder) Build() *proto.TaskGraphSpec {
 func (b *builder) WipeAndRestart(nodes []*proto.Node, desiredSpec *proto.GroupSpec) proto.TaskID {
 	w := b.Wipe(nodes)
 	s := b.StartFromScratch(desiredSpec)
-	return b.b.SerIDs([]proto.TaskID{
+	return b.b.SerIDs("WipeAndRestart", []proto.TaskID{
 		w,
 		s,
-	})
+	}).Tail
 }
 
 func (b *builder) KillSome(nodes []*proto.Node, n int64) (proto.TaskID, error) {
@@ -83,23 +83,25 @@ func (b *builder) StartNodes(n int64, v int64) proto.TaskID {
 	return b.b.ParIDs("StartFromScratch", out)
 }
 
-//func RollingRestart(nodes []*Instance, newVersion Version) ActionNode {
-//	var out []ActionNode
-//	for _, i := range nodes {
-//		if i.Version == newVersion {
-//			continue
-//		}
-//		out = append(out, Unit(&RestartInstance{
-//			ID:         i.ID,
-//			NewVersion: newVersion,
-//		}))
-//	}
-//	return Ser(out)
-//}
-//
-//func ReplaceInstance(id InstanceID, spec GroupSpec) ActionNode {
-//	return Par([]ActionNode{
-//		Unit(ShutDownInstance{id}),
-//		Unit(StartInstance{InstanceSpec{spec.Version}}),
-//	})
-//}
+func (b *builder) RollingUpgrade(nodes []*proto.Node, newSpec *proto.NodeSpec) proto.TaskID {
+	var out []taskgraph.TaskChain
+	for _, node := range nodes {
+		shutDown := b.b.Unit(&proto.Action{
+			Action: &proto.Action_ShutDownNode{
+				ShutDownNode: &proto.ShutDownNode{
+					NodeId: node.Id,
+				},
+			},
+		})
+		start := b.b.Unit(&proto.Action{
+			Action: &proto.Action_StartNode{
+				StartNode: &proto.StartNode{
+					Spec: newSpec,
+				},
+			},
+		})
+		restart := b.b.SerIDs("Restart", []proto.TaskID{shutDown, start})
+		out = append(out, restart)
+	}
+	return b.b.SerChains(out).Tail
+}

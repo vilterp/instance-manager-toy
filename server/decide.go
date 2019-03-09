@@ -10,16 +10,16 @@ import (
 func Decide(st *db.StateDB, input *proto.Input) (*proto.TaskGraphSpec, error) {
 	switch tInput := input.Input.(type) {
 	case *proto.Input_UpdateSpec:
-		update := tInput.UpdateSpec
-		st.GroupSpec.UpdateSpec(update.Spec)
+		spec := tInput.UpdateSpec.Spec
+		st.GroupSpec.UpdateSpec(spec)
 		b := newBuilder()
 
 		nodes := st.Nodes.List()
 
-		specDelta := update.Spec.NumInstances - int64(len(nodes))
+		specDelta := spec.NumInstances - int64(len(nodes))
 		fmt.Println("delta", specDelta)
 		if specDelta > 0 {
-			b.StartNodes(specDelta, update.Spec.Version)
+			b.StartNodes(specDelta, spec.Version)
 			return b.Build(), nil
 		} else if specDelta < 0 {
 			_, err := b.KillSome(nodes, -specDelta)
@@ -27,10 +27,14 @@ func Decide(st *db.StateDB, input *proto.Input) (*proto.TaskGraphSpec, error) {
 				return nil, err
 			}
 			return b.Build(), nil
+		} else {
+			// TODO: update version and size at the same time
+			b.RollingUpgrade(nodes, &proto.NodeSpec{
+				Version: spec.Version,
+			})
+			return b.Build(), nil
 		}
-
-		b.WipeAndRestart(st.Nodes.List(), st.GroupSpec.GetCurrent().Spec)
-		return b.Build(), nil
+		return nil, fmt.Errorf("don't know how to upgrade")
 	case *proto.Input_KillNode:
 		panic("implement me")
 	}
