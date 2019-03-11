@@ -45,6 +45,7 @@ $ bin/server
 
 ```
 $ bin/client nodes ls
+# starts with 0 nodes
 # create 3 nodes at version 1
 $ bin/client update 3 1
 TASK GRAPH SPEC:
