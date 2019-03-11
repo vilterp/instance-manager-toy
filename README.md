@@ -35,3 +35,78 @@ tables; a real implementation would persist all of this into the DB.
 - `make` to build `bin/client` and `bin/server`.
 - `bin/server` to start the server
 - `bin/client` to invoke the client. Its subcommands have usage messages.
+
+## Example Invocation
+
+```
+$ bin/server
+2019/03/11 18:05:59 main.go:25: listening at 0.0.0.0:8888
+```
+
+```
+$ bin/client nodes ls
+# create 3 nodes at version 1
+$ bin/client update 3 1
+TASK GRAPH SPEC:
+ID	prereqs	action
+0	[]	start_node:<spec:<version:1 > >
+1	[]	start_node:<spec:<version:1 > >
+2	[]	start_node:<spec:<version:1 > >
+3	[0 1 2]	do_nothing:<description:"StartNodes" >
+
+TASKS STREAM:
+
+2019/03/11 18:05:40 task evt: initial:<tasks:<id:"0" action:<start_node:<spec:<version:1 > > > state:TaskRunning started_at:<seconds:1552341940 nanos:974026000 > > tasks:<id:"1" action:<start_node:<spec:<version:1 > > > state:TaskRunning started_at:<seconds:1552341940 nanos:974011000 > > tasks:<id:"2" action:<start_node:<spec:<version:1 > > > state:TaskRunning started_at:<seconds:1552341940 nanos:974024000 > > tasks:<id:"3" action:<do_nothing:<description:"StartNodes" > > > >
+2019/03/11 18:05:45 task evt: succeeded:<id:"1" >
+2019/03/11 18:05:45 task evt: succeeded:<id:"0" >
+2019/03/11 18:05:46 task evt: succeeded:<id:"2" >
+2019/03/11 18:05:46 task evt: started:<id:"3" >
+2019/03/11 18:05:46 task evt: succeeded:<id:"3" >
+2019/03/11 18:05:46 EOF
+
+# rolling upgrade to version 2
+$ bin/client update 3 2
+TASK GRAPH SPEC:
+ID	prereqs	action
+0	[]	shut_down_node:<node_id:"3f76da3b-bcc1-40a0-b6cb-415f248f2cb7" >
+1	[0]	start_node:<spec:<version:2 > >
+2	[1]	shut_down_node:<node_id:"ec687ebc-576c-4440-90d0-6280ae9e80c4" >
+3	[2]	start_node:<spec:<version:2 > >
+4	[3]	shut_down_node:<node_id:"e08caca5-260c-40d2-a2c2-e0a4b64859bf" >
+5	[4]	start_node:<spec:<version:2 > >
+
+TASKS STREAM:
+
+2019/03/11 18:07:28 task evt: initial:<tasks:<id:"1" action:<start_node:<spec:<version:2 > > > > tasks:<id:"2" action:<shut_down_node:<node_id:"ec687ebc-576c-4440-90d0-6280ae9e80c4" > > > tasks:<id:"3" action:<start_node:<spec:<version:2 > > > > tasks:<id:"4" action:<shut_down_node:<node_id:"e08caca5-260c-40d2-a2c2-e0a4b64859bf" > > > tasks:<id:"5" action:<start_node:<spec:<version:2 > > > > tasks:<id:"0" action:<shut_down_node:<node_id:"3f76da3b-bcc1-40a0-b6cb-415f248f2cb7" > > state:TaskRunning started_at:<seconds:1552342048 nanos:706730000 > > >
+2019/03/11 18:07:33 task evt: succeeded:<id:"0" >
+2019/03/11 18:07:33 task evt: started:<id:"1" >
+2019/03/11 18:07:37 task evt: succeeded:<id:"1" >
+2019/03/11 18:07:37 task evt: started:<id:"2" >
+2019/03/11 18:07:42 task evt: succeeded:<id:"2" >
+2019/03/11 18:07:42 task evt: started:<id:"3" >
+2019/03/11 18:07:45 task evt: succeeded:<id:"3" >
+2019/03/11 18:07:45 task evt: started:<id:"4" >
+2019/03/11 18:07:49 task evt: succeeded:<id:"4" >
+2019/03/11 18:07:49 task evt: started:<id:"5" >
+2019/03/11 18:07:52 task evt: succeeded:<id:"5" >
+2019/03/11 18:07:52 EOF
+
+# scale back to 0
+$ bin/client update 0 2
+TASK GRAPH SPEC:
+ID	prereqs	action
+0	[]	shut_down_node:<node_id:"99b2bc09-31c1-4c4d-8d71-8dc04d3cdec4" >
+1	[]	shut_down_node:<node_id:"02d3729a-f3b7-419f-93ef-23c099ed63a6" >
+2	[]	shut_down_node:<node_id:"473770ae-e74e-435c-b50e-2d5f8873a589" >
+3	[0 1 2]	do_nothing:<description:"KillSome" >
+
+TASKS STREAM:
+
+2019/03/11 18:08:11 task evt: initial:<tasks:<id:"0" action:<shut_down_node:<node_id:"99b2bc09-31c1-4c4d-8d71-8dc04d3cdec4" > > state:TaskRunning started_at:<seconds:1552342091 nanos:463015000 > > tasks:<id:"1" action:<shut_down_node:<node_id:"02d3729a-f3b7-419f-93ef-23c099ed63a6" > > state:TaskRunning started_at:<seconds:1552342091 nanos:463024000 > > tasks:<id:"2" action:<shut_down_node:<node_id:"473770ae-e74e-435c-b50e-2d5f8873a589" > > state:TaskRunning started_at:<seconds:1552342091 nanos:463026000 > > tasks:<id:"3" action:<do_nothing:<description:"KillSome" > > > >
+2019/03/11 18:08:15 task evt: succeeded:<id:"2" >
+2019/03/11 18:08:16 task evt: succeeded:<id:"0" >
+2019/03/11 18:08:16 task evt: succeeded:<id:"1" >
+2019/03/11 18:08:16 task evt: started:<id:"3" >
+2019/03/11 18:08:16 task evt: succeeded:<id:"3" >
+2019/03/11 18:08:16 EOF
+```
