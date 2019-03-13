@@ -3,8 +3,8 @@ package server
 import (
 	"fmt"
 
-	"github.com/cockroachlabs/instance_manager/proto"
-	"github.com/cockroachlabs/instance_manager/taskgraph"
+	"github.com/vilterp/instance-manager-toy/proto"
+	"github.com/vilterp/instance-manager-toy/taskgraph"
 )
 
 type builder struct {

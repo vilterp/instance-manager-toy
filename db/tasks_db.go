@@ -3,8 +3,8 @@ package db
 import (
 	"fmt"
 
-	"github.com/cockroachlabs/instance_manager/proto"
 	"github.com/golang/protobuf/ptypes"
+	"github.com/vilterp/instance-manager-toy/proto"
 )
 
 type TasksDB interface {

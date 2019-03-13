@@ -1,6 +1,6 @@
 package db
 
-import "github.com/cockroachlabs/instance_manager/proto"
+import "github.com/vilterp/instance-manager-toy/proto"
 
 type StateDB struct {
 	GroupSpec  GroupSpecDB

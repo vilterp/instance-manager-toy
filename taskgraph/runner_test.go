@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/cockroachlabs/instance_manager/actions"
-	"github.com/cockroachlabs/instance_manager/proto"
+	"github.com/vilterp/instance-manager-toy/actions"
+	"github.com/vilterp/instance-manager-toy/proto"
 )
 
 func Test_Par(t *testing.T) {

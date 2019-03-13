@@ -6,7 +6,7 @@ import (
 	"log"
 	"testing"
 
-	"github.com/cockroachlabs/instance_manager/proto"
+	"github.com/vilterp/instance-manager-toy/proto"
 	"google.golang.org/grpc/metadata"
 )
 

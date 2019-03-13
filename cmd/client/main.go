@@ -10,9 +10,8 @@ import (
 
 	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/timestamp"
-
-	"github.com/cockroachlabs/instance_manager/proto"
 	"github.com/spf13/cobra"
+	"github.com/vilterp/instance-manager-toy/proto"
 	"google.golang.org/grpc"
 )
 
