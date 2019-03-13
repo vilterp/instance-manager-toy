@@ -3,7 +3,7 @@ package db
 import (
 	"sync"
 
-	"github.com/cockroachlabs/instance_manager/proto"
+	"github.com/vilterp/instance-manager-toy/proto"
 )
 
 type SubID int

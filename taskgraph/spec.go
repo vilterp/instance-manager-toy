@@ -3,7 +3,7 @@ package taskgraph
 import (
 	"fmt"
 
-	"github.com/cockroachlabs/instance_manager/proto"
+	"github.com/vilterp/instance-manager-toy/proto"
 )
 
 type SpecBuilder struct {

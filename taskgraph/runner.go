@@ -1,9 +1,9 @@
 package taskgraph
 
 import (
-	"github.com/cockroachlabs/instance_manager/actions"
-	"github.com/cockroachlabs/instance_manager/db"
-	"github.com/cockroachlabs/instance_manager/proto"
+	"github.com/vilterp/instance-manager-toy/actions"
+	"github.com/vilterp/instance-manager-toy/db"
+	"github.com/vilterp/instance-manager-toy/proto"
 )
 
 type Runner struct {

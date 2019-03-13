@@ -3,8 +3,8 @@ package server
 import (
 	"fmt"
 
-	"github.com/cockroachlabs/instance_manager/db"
-	"github.com/cockroachlabs/instance_manager/proto"
+	"github.com/vilterp/instance-manager-toy/db"
+	"github.com/vilterp/instance-manager-toy/proto"
 )
 
 func Decide(st *db.StateDB, input *proto.Input) (*proto.TaskGraphSpec, error) {

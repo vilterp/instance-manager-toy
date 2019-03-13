@@ -1,8 +1,8 @@
 package db
 
 import (
-	"github.com/cockroachlabs/instance_manager/proto"
 	"github.com/golang/protobuf/ptypes"
+	"github.com/vilterp/instance-manager-toy/proto"
 )
 
 type GroupSpecDB interface {

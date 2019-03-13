@@ -3,10 +3,10 @@ package server
 import (
 	"context"
 
-	"github.com/cockroachlabs/instance_manager/actions"
-	"github.com/cockroachlabs/instance_manager/db"
-	"github.com/cockroachlabs/instance_manager/proto"
-	"github.com/cockroachlabs/instance_manager/taskgraph"
+	"github.com/vilterp/instance-manager-toy/actions"
+	"github.com/vilterp/instance-manager-toy/db"
+	"github.com/vilterp/instance-manager-toy/proto"
+	"github.com/vilterp/instance-manager-toy/taskgraph"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
